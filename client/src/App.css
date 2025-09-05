@@ -1,9 +1,0 @@
-/* Custom components and utilities that extend Tailwind */
-.App {
-  min-height: 100vh;
-}
-
-/* Account for fixed navbar */
-.main-content {
-  padding-top: 3.5rem; /* 56px equivalent to pt-14 */
-}
