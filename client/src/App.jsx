@@ -1,29 +1,14 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import NavBar from './components/NavBar';
-import Footer from './components/Footer';
-import HomePage from './pages/HomePage';
-import './App.css';
+import Navbar from './components/navbar/Navbar'
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen flex flex-col bg-gray-50">
-        <NavBar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            {/* Additional routes will be added here */}
-            <Route path="*" element={
-              <div className="flex items-center justify-center h-screen">
-                <h1 className="text-2xl text-gray-600">Page not found</h1>
-              </div>
-            } />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </Router>
-  );
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Your other components will go here */}
+      </main>
+    </div>
+  )
 }
 
-export default App;
+export default App
