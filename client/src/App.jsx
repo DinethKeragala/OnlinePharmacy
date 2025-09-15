@@ -1,13 +1,23 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Navbar from './components/navbar/Navbar'
+import Home from './pages/Home'
+import Medicines from './pages/Medicines'
+import HealthProducts from './pages/HealthProducts'
+import Prescriptions from './pages/Prescriptions'
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Your other components will go here */}
-      </main>
-    </div>
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/medicines" element={<Medicines />} />
+          <Route path="/health-products" element={<HealthProducts />} />
+          <Route path="/prescriptions" element={<Prescriptions />} />
+        </Routes>
+      </div>
+    </Router>
   )
 }
 
