@@ -19,6 +19,8 @@ app.use(express.json());
 // Routes
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/health-products', require('./routes/healthProductRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 
 // Basic route
 app.get('/', (req, res) => {
