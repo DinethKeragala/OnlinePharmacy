@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Medicines from './pages/Medicines'
 import HealthProducts from './pages/HealthProducts'
 import Prescriptions from './pages/Prescriptions'
+import Footer from './components/footer/Footer'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/health-products" element={<HealthProducts />} />
           <Route path="/prescriptions" element={<Prescriptions />} />
         </Routes>
+        <Footer />
       </div>
     </Router>
   )

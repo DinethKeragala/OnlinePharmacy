@@ -1,0 +1,65 @@
+const HealthProduct = require('../models/HealthProduct');
+
+function buildFilter(query) {
+  const filter = {};
+  const { category, inStock, q, priceMin, priceMax } = query;
+
+  if (category && category !== 'all') filter.category = category;
+  if (typeof inStock !== 'undefined') filter.inStock = inStock === 'true';
+  if (q) {
+    filter.$or = [
+      { name: { $regex: q, $options: 'i' } },
+      { genericName: { $regex: q, $options: 'i' } },
+    ];
+  }
+  const price = {};
+  if (priceMin) price.$gte = Number(priceMin);
+  if (priceMax) price.$lte = Number(priceMax);
+  if (Object.keys(price).length) filter.price = price;
+  return filter;
+}
+
+exports.getHealthProducts = async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Math.min(Number(req.query.limit) || 12, 50);
+    const skip = (page - 1) * limit;
+    const filter = buildFilter(req.query);
+
+    let sort = { createdAt: -1 };
+    if (req.query.sort === 'price_asc') sort = { price: 1 };
+    if (req.query.sort === 'price_desc') sort = { price: -1 };
+    if (req.query.sort === 'rating_desc') sort = { rating: -1 };
+
+    const [total, items] = await Promise.all([
+      HealthProduct.countDocuments(filter),
+      HealthProduct.find(filter).sort(sort).skip(skip).limit(limit),
+    ]);
+
+    res.json({ data: items, page, pages: Math.ceil(total / limit) || 1, total });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getHealthProductById = async (req, res) => {
+  try {
+    const item = await HealthProduct.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: 'Not found' });
+    res.json(item);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getHealthCategories = async (req, res) => {
+  try {
+    const categories = await HealthProduct.distinct('category');
+    res.json(categories.sort());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
