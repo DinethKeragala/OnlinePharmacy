@@ -30,13 +30,34 @@ function buildFilter(query) {
 exports.getHealthProducts = async (req, res) => {
   try {
     const { page, limit, skip } = parsePagination(req.query, 12, 50);
-    const filter = buildFilter(req.query);
     const sort = parseSort(req.query.sort);
 
-    const [total, items] = await Promise.all([
-      HealthProduct.countDocuments(filter),
-      HealthProduct.find(filter).sort(sort).skip(skip).limit(limit),
-    ]);
+    // Build chained queries to avoid constructing DB queries from user-shaped objects
+    const applyFilters = (qry) => {
+      const { category, inStock, q, priceMin, priceMax } = req.query;
+
+      const cat = sanitizeCategory(category);
+      if (cat) qry = qry.where('category').equals(cat);
+
+      const inStockFlag = parseInStockFlag(inStock);
+      if (typeof inStockFlag === 'boolean') qry = qry.where('inStock').equals(inStockFlag);
+
+      const or = makeTextSearchOr(q, ['name', 'genericName']);
+      if (or) qry = qry.or(or);
+
+      const price = buildPriceFilter(priceMin, priceMax);
+      if (price) {
+        if (price.$gte !== undefined) qry = qry.where('price').gte(price.$gte);
+        if (price.$lte !== undefined) qry = qry.where('price').lte(price.$lte);
+      }
+
+      return qry;
+    };
+
+    const countQuery = applyFilters(HealthProduct.countDocuments());
+    const listQuery = applyFilters(HealthProduct.find()).sort(sort).skip(skip).limit(limit);
+
+    const [total, items] = await Promise.all([countQuery, listQuery]);
 
     res.json({ data: items, page, pages: Math.ceil(total / limit) || 1, total });
   } catch (err) {

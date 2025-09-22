@@ -97,11 +97,11 @@ exports.getProductById = async (req, res) => {
 
 exports.getCategories = async (req, res) => {
   try {
-    const match = {};
+    let q = Product.find();
     if (typeof req.query.type === 'string' && (req.query.type === 'medicine' || req.query.type === 'health')) {
-      match.type = req.query.type;
+      q = q.where('type').equals(req.query.type);
     }
-    const categories = await Product.distinct('category', match);
+    const categories = await q.distinct('category');
     res.json(categories.sort());
   } catch (err) {
     console.error(err);
