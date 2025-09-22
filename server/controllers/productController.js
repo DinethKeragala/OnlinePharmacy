@@ -1,13 +1,23 @@
 const Product = require('../models/Product');
-const { safeRegexContains, toFiniteNumber } = require('../utils/safeQuery');
+const { safeRegexContains, toFiniteNumber, isValidObjectId } = require('../utils/safeQuery');
 
 // Build Mongo filter from query params
 function buildFilter(query) {
   const filter = {};
   const { category, inStock, prescription, q, priceMin, priceMax, type } = query;
 
-  if (type) filter.type = type;
-  if (category && category !== 'all') filter.category = category;
+  // type: whitelist allowed types only
+  if (typeof type === 'string' && (type === 'medicine' || type === 'health')) {
+    filter.type = type;
+  }
+
+  // category: accept only simple safe strings
+  if (typeof category === 'string' && category !== 'all') {
+    const trimmed = category.trim();
+    if (trimmed && /^[\w\s-]{1,64}$/.test(trimmed)) {
+      filter.category = trimmed;
+    }
+  }
   if (typeof inStock !== 'undefined') filter.inStock = inStock === 'true';
   if (prescription === 'required') filter.prescription = true;
   if (prescription === 'none') filter.prescription = false;
@@ -58,7 +68,9 @@ exports.getProducts = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const { id } = req.params;
+    if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
+    const product = await Product.findById(id);
     if (!product) return res.status(404).json({ message: 'Not found' });
     res.json(product);
   } catch (err) {
@@ -70,7 +82,9 @@ exports.getProductById = async (req, res) => {
 exports.getCategories = async (req, res) => {
   try {
     const match = {};
-    if (req.query.type) match.type = req.query.type;
+    if (typeof req.query.type === 'string' && (req.query.type === 'medicine' || req.query.type === 'health')) {
+      match.type = req.query.type;
+    }
     const categories = await Product.distinct('category', match);
     res.json(categories.sort());
   } catch (err) {

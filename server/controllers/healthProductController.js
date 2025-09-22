@@ -1,11 +1,16 @@
 const HealthProduct = require('../models/HealthProduct');
-const { safeRegexContains, toFiniteNumber } = require('../utils/safeQuery');
+const { safeRegexContains, toFiniteNumber, isValidObjectId } = require('../utils/safeQuery');
 
 function buildFilter(query) {
   const filter = {};
   const { category, inStock, q, priceMin, priceMax } = query;
 
-  if (category && category !== 'all') filter.category = category;
+  if (typeof category === 'string' && category !== 'all') {
+    const trimmed = category.trim();
+    if (trimmed && /^[\w\s-]{1,64}$/.test(trimmed)) {
+      filter.category = trimmed;
+    }
+  }
   if (typeof inStock !== 'undefined') filter.inStock = inStock === 'true';
   if (q) {
     const rx = safeRegexContains(q);
@@ -46,7 +51,9 @@ exports.getHealthProducts = async (req, res) => {
 
 exports.getHealthProductById = async (req, res) => {
   try {
-    const item = await HealthProduct.findById(req.params.id);
+    const { id } = req.params;
+    if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
+    const item = await HealthProduct.findById(id);
     if (!item) return res.status(404).json({ message: 'Not found' });
     res.json(item);
   } catch (err) {
