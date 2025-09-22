@@ -93,26 +93,49 @@ exports.getCategories = async (req, res) => {
   }
 };
 
-// Admin: create a new product
+// Admin: create a new product (sanitize input and whitelist fields)
 exports.createProduct = async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      genericName,
-      price,
-      category,
-      imageUrl,
-      inStock,
-      stock,
-      prescription,
-      type,
-      tags,
-      rating,
-    } = req.body || {};
+    const body = req.body || {};
 
-    if (!name || !description || typeof price === 'undefined' || !category) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    const name = typeof body.name === 'string' ? body.name.trim().slice(0, 200) : '';
+    const description = typeof body.description === 'string' ? body.description.trim().slice(0, 5000) : '';
+    const genericName = typeof body.genericName === 'string' ? body.genericName.trim().slice(0, 200) : undefined;
+    const categoryRaw = typeof body.category === 'string' ? body.category.trim() : '';
+    const category = /^[\w\s-]{1,64}$/.test(categoryRaw) ? categoryRaw : '';
+    const type = typeof body.type === 'string' && (body.type === 'medicine' || body.type === 'health') ? body.type : 'medicine';
+
+    const priceNum = toFiniteNumber(body.price);
+    const price = priceNum !== null ? Math.max(0, priceNum) : null;
+
+    const inStock = typeof body.inStock === 'boolean' ? body.inStock : Boolean(body.inStock);
+    const stockNum = toFiniteNumber(body.stock);
+    const stock = stockNum !== null ? Math.max(0, Math.floor(stockNum)) : 0;
+
+    const prescription = typeof body.prescription === 'boolean' ? body.prescription : Boolean(body.prescription);
+
+    const ratingNum = toFiniteNumber(body.rating);
+    const rating = ratingNum !== null ? Math.max(0, Math.min(5, ratingNum)) : undefined;
+
+    let imageUrl;
+    if (typeof body.imageUrl === 'string') {
+      const u = body.imageUrl.trim();
+      if (u.length <= 1024 && /^(https?:)\/\//i.test(u)) imageUrl = u;
+    }
+
+    let tags;
+    if (Array.isArray(body.tags)) {
+      tags = body.tags
+        .filter((t) => typeof t === 'string')
+        .map((t) => t.trim())
+        .filter((t) => t)
+        .slice(0, 20)
+        .map((t) => t.slice(0, 50));
+      if (!tags.length) tags = undefined;
+    }
+
+    if (!name || !description || price === null || !category) {
+      return res.status(400).json({ message: 'Missing or invalid required fields' });
     }
 
     const doc = new Product({
@@ -125,7 +148,7 @@ exports.createProduct = async (req, res) => {
       inStock,
       stock,
       prescription,
-      type: type || 'medicine',
+      type,
       tags,
       rating,
     });

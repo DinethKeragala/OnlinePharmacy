@@ -34,15 +34,14 @@ exports.create = async (req, res) => {
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     const doctor = typeof body.doctor === 'string' ? body.doctor.trim() : '';
     const rxNumber = typeof body.rxNumber === 'string' ? body.rxNumber.trim() : '';
-    const status = typeof body.status === 'string' ? body.status : 'pending';
+    // Do NOT allow clients to set status on creation; always start as 'pending'
+    const status = 'pending';
     const note = typeof body.note === 'string' ? body.note.trim() : undefined;
 
     if (!name || !doctor || !rxNumber || !body.prescribedAt) {
       return res.status(400).json({ message: 'name, doctor, rxNumber, prescribedAt are required' });
     }
-    if (!ALLOWED_STATUS.includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
-    }
+    // status is server-controlled ('pending'); no validation of client-provided status needed
 
     // Basic rxNumber whitelist: letters, numbers, dash, up to 64 chars
     if (!/^[A-Za-z0-9-]{1,64}$/.test(rxNumber)) {
@@ -72,6 +71,7 @@ exports.create = async (req, res) => {
     // Cap note length to prevent abuse
     const safeNote = typeof note === 'string' ? note.slice(0, 1000) : undefined;
 
+    // Create document using only whitelisted, sanitized fields (ignore raw req.body)
     const doc = await Prescription.create({
       user: req.userId,
       name,
