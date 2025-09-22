@@ -5,10 +5,10 @@ export default function Footer() {
 	const year = new Date().getFullYear()
 
 	const socials = [
-		{ name: 'Facebook', href: '#', icon: <FaFacebookF size={16} /> },
-		{ name: 'Instagram', href: '#', icon: <FaInstagram size={16} /> },
-		{ name: 'Twitter (X)', href: '#', icon: <FaTwitter size={16} /> },
-		{ name: 'LinkedIn', href: '#', icon: <FaLinkedinIn size={16} /> },
+		{ name: 'Facebook', href: 'https://facebook.com', icon: <FaFacebookF size={16} /> },
+		{ name: 'Instagram', href: 'https://instagram.com', icon: <FaInstagram size={16} /> },
+		{ name: 'Twitter (X)', href: 'https://x.com', icon: <FaTwitter size={16} /> },
+		{ name: 'LinkedIn', href: 'https://linkedin.com', icon: <FaLinkedinIn size={16} /> },
 	]
 
 			return (
@@ -60,10 +60,10 @@ export default function Footer() {
 					<div>
 							<h3 className="text-sm font-semibold text-white tracking-wide uppercase">Support</h3>
 						<ul className="mt-4 space-y-3">
-								<li><a href="#" className="text-blue-100 hover:text-white">Help Center</a></li>
-								<li><a href="#" className="text-blue-100 hover:text-white">Shipping & Delivery</a></li>
-								<li><a href="#" className="text-blue-100 hover:text-white">Returns & Refunds</a></li>
-								<li><a href="#" className="text-blue-100 hover:text-white">Contact Us</a></li>
+								<li><Link to="/help" className="text-blue-100 hover:text-white">Help Center</Link></li>
+								<li><Link to="/shipping" className="text-blue-100 hover:text-white">Shipping & Delivery</Link></li>
+								<li><Link to="/returns" className="text-blue-100 hover:text-white">Returns & Refunds</Link></li>
+								<li><Link to="/contact" className="text-blue-100 hover:text-white">Contact Us</Link></li>
 						</ul>
 					</div>
 
@@ -93,9 +93,9 @@ export default function Footer() {
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
 						<p className="text-sm text-blue-100">© {year} MediCare. All rights reserved.</p>
 						<div className="flex items-center gap-6 text-sm text-blue-100">
-							<a href="#" className="hover:text-white">Privacy</a>
-							<a href="#" className="hover:text-white">Terms</a>
-							<a href="#" className="hover:text-white">Cookies</a>
+							<Link to="/privacy" className="hover:text-white">Privacy</Link>
+							<Link to="/terms" className="hover:text-white">Terms</Link>
+							<Link to="/cookies" className="hover:text-white">Cookies</Link>
 					</div>
 				</div>
 			</div>

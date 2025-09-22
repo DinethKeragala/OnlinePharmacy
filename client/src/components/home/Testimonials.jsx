@@ -1,4 +1,5 @@
 import { FaStar } from 'react-icons/fa'
+import { Link } from 'react-router-dom'
 
 const testimonials = [
   {
@@ -68,9 +69,9 @@ export default function Testimonials() {
         </div>
 
         <div className="mt-10 text-center">
-          <a href="#" className="inline-flex items-center text-blue-600 font-medium hover:underline">
+          <Link to="/testimonials" className="inline-flex items-center text-blue-600 font-medium hover:underline">
             Read more testimonials <span className="ml-1">→</span>
-          </a>
+          </Link>
         </div>
       </div>
     </section>

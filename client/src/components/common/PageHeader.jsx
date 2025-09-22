@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types'
+import { Link } from 'react-router-dom'
 
 const PageHeader = ({ title, breadcrumbs }) => {
   return (
@@ -10,12 +11,9 @@ const PageHeader = ({ title, breadcrumbs }) => {
             <div key={item.path} className="flex items-center">
               {index > 0 && <span className="mx-2">/</span>}
               {item.path ? (
-                <a 
-                  href={item.path}
-                  className="hover:text-white transition-colors"
-                >
+                <Link to={item.path} className="hover:text-white transition-colors">
                   {item.label}
-                </a>
+                </Link>
               ) : (
                 <span>{item.label}</span>
               )}

@@ -1,5 +1,5 @@
 const Prescription = require('../models/Prescription');
-const { isValidObjectId } = require('../utils/safeQuery');
+const { isValidObjectId, toFiniteNumber } = require('../utils/safeQuery');
 
 const ALLOWED_STATUS = ['active', 'pending', 'expired'];
 
@@ -28,24 +28,49 @@ exports.list = async (req, res) => {
 // POST /api/prescriptions
 exports.create = async (req, res) => {
   try {
-    const {
-      name,
-      doctor,
-      rxNumber,
-      prescribedAt,
-      nextRefillAt,
-      expiredAt,
-      refillsLeft = 0,
-      status = 'pending',
-      note,
-    } = req.body || {};
+    if (!isValidObjectId(req.userId)) return res.status(401).json({ message: 'Invalid user' });
 
-    if (!name || !doctor || !rxNumber || !prescribedAt) {
+    const body = req.body || {};
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    const doctor = typeof body.doctor === 'string' ? body.doctor.trim() : '';
+    const rxNumber = typeof body.rxNumber === 'string' ? body.rxNumber.trim() : '';
+    const status = typeof body.status === 'string' ? body.status : 'pending';
+    const note = typeof body.note === 'string' ? body.note.trim() : undefined;
+
+    if (!name || !doctor || !rxNumber || !body.prescribedAt) {
       return res.status(400).json({ message: 'name, doctor, rxNumber, prescribedAt are required' });
     }
     if (!ALLOWED_STATUS.includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
+
+    // Basic rxNumber whitelist: letters, numbers, dash, up to 64 chars
+    if (!/^[A-Za-z0-9-]{1,64}$/.test(rxNumber)) {
+      return res.status(400).json({ message: 'Invalid rxNumber format' });
+    }
+
+    // Parse and validate dates
+    const prescribedAt = new Date(body.prescribedAt);
+    if (isNaN(prescribedAt.getTime())) return res.status(400).json({ message: 'Invalid prescribedAt' });
+    let nextRefillAt;
+    if (body.nextRefillAt) {
+      const d = new Date(body.nextRefillAt);
+      if (isNaN(d.getTime())) return res.status(400).json({ message: 'Invalid nextRefillAt' });
+      nextRefillAt = d;
+    }
+    let expiredAt;
+    if (body.expiredAt) {
+      const d = new Date(body.expiredAt);
+      if (isNaN(d.getTime())) return res.status(400).json({ message: 'Invalid expiredAt' });
+      expiredAt = d;
+    }
+
+    // Coerce refillsLeft to non-negative integer
+    const rlNum = toFiniteNumber(body.refillsLeft);
+    const refillsLeft = Math.max(0, Math.floor(rlNum ?? 0));
+
+    // Cap note length to prevent abuse
+    const safeNote = typeof note === 'string' ? note.slice(0, 1000) : undefined;
 
     const doc = await Prescription.create({
       user: req.userId,
@@ -57,7 +82,7 @@ exports.create = async (req, res) => {
       expiredAt,
       refillsLeft,
       status,
-      note,
+      note: safeNote,
     });
     res.status(201).json(doc);
   } catch (err) {
