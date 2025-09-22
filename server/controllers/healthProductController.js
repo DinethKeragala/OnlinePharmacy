@@ -1,41 +1,37 @@
 const HealthProduct = require('../models/HealthProduct');
-const { safeRegexContains, toFiniteNumber, isValidObjectId } = require('../utils/safeQuery');
+const { isValidObjectId } = require('../utils/safeQuery');
+const {
+  sanitizeCategory,
+  parseInStockFlag,
+  buildPriceFilter,
+  makeTextSearchOr,
+  parsePagination,
+  parseSort,
+} = require('../utils/queryBuilders');
 
 function buildFilter(query) {
   const filter = {};
   const { category, inStock, q, priceMin, priceMax } = query;
 
-  if (typeof category === 'string' && category !== 'all') {
-    const trimmed = category.trim();
-    if (trimmed && /^[\w\s-]{1,64}$/.test(trimmed)) {
-      filter.category = trimmed;
-    }
-  }
-  if (typeof inStock !== 'undefined') filter.inStock = inStock === 'true';
-  if (q) {
-    const rx = safeRegexContains(String(q).slice(0, 128));
-    filter.$or = [ { name: rx }, { genericName: rx } ];
-  }
-  const price = {};
-  const pmin = toFiniteNumber(priceMin);
-  const pmax = toFiniteNumber(priceMax);
-  if (pmin !== null) price.$gte = pmin;
-  if (pmax !== null) price.$lte = pmax;
-  if (Object.keys(price).length) filter.price = price;
+  const cat = sanitizeCategory(category);
+  if (cat) filter.category = cat;
+
+  const inStockFlag = parseInStockFlag(inStock);
+  if (typeof inStockFlag === 'boolean') filter.inStock = inStockFlag;
+
+  const or = makeTextSearchOr(q, ['name', 'genericName']);
+  if (or) filter.$or = or;
+
+  const price = buildPriceFilter(priceMin, priceMax);
+  if (price) filter.price = price;
   return filter;
 }
 
 exports.getHealthProducts = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Math.min(Number(req.query.limit) || 12, 50);
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, 12, 50);
     const filter = buildFilter(req.query);
-
-    let sort = { createdAt: -1 };
-    if (req.query.sort === 'price_asc') sort = { price: 1 };
-    if (req.query.sort === 'price_desc') sort = { price: -1 };
-    if (req.query.sort === 'rating_desc') sort = { rating: -1 };
+    const sort = parseSort(req.query.sort);
 
     const [total, items] = await Promise.all([
       HealthProduct.countDocuments(filter),

@@ -96,7 +96,10 @@ exports.requestRefill = async (req, res) => {
   try {
   const { id } = req.params;
   if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
-    const doc = await Prescription.findOne({ _id: id, user: req.userId });
+  if (!isValidObjectId(req.userId)) return res.status(401).json({ message: 'Invalid user' });
+    const doc = await Prescription.findOne()
+      .where('_id').equals(id)
+      .where('user').equals(req.userId);
     if (!doc) return res.status(404).json({ message: 'Not found' });
     if (doc.status !== 'active') return res.status(400).json({ message: 'Only active prescriptions can be refilled' });
     if (doc.refillsLeft <= 0) return res.status(400).json({ message: 'No refills left' });

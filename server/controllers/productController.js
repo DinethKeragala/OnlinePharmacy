@@ -1,65 +1,81 @@
 const Product = require('../models/Product');
-const { safeRegexContains, toFiniteNumber, isValidObjectId } = require('../utils/safeQuery');
+const { toFiniteNumber, isValidObjectId } = require('../utils/safeQuery');
+const {
+  sanitizeCategory,
+  parseInStockFlag,
+  buildPriceFilter,
+  makeTextSearchOr,
+  parsePagination,
+  parseSort,
+} = require('../utils/queryBuilders');
 
 // Build Mongo filter from query params
 function buildFilter(query) {
   const filter = {};
   const { category, inStock, prescription, q, priceMin, priceMax, type } = query;
 
-  // type: whitelist allowed types only
   if (typeof type === 'string' && (type === 'medicine' || type === 'health')) {
     filter.type = type;
   }
 
-  // category: accept only simple safe strings
-  if (typeof category === 'string' && category !== 'all') {
-    const trimmed = category.trim();
-    if (trimmed && /^[\w\s-]{1,64}$/.test(trimmed)) {
-      filter.category = trimmed;
-    }
-  }
-  if (typeof inStock !== 'undefined') filter.inStock = inStock === 'true';
+  const cat = sanitizeCategory(category);
+  if (cat) filter.category = cat;
+
+  const inStockFlag = parseInStockFlag(inStock);
+  if (typeof inStockFlag === 'boolean') filter.inStock = inStockFlag;
+
   if (prescription === 'required') filter.prescription = true;
   if (prescription === 'none') filter.prescription = false;
-  if (q) {
-    const rx = safeRegexContains(String(q).slice(0, 128));
-    filter.$or = [ { name: rx }, { genericName: rx } ];
-  }
-  const price = {};
-  const pmin = toFiniteNumber(priceMin);
-  const pmax = toFiniteNumber(priceMax);
-  if (pmin !== null) price.$gte = pmin;
-  if (pmax !== null) price.$lte = pmax;
-  if (Object.keys(price).length) filter.price = price;
+
+  const or = makeTextSearchOr(q, ['name', 'genericName']);
+  if (or) filter.$or = or;
+
+  const price = buildPriceFilter(priceMin, priceMax);
+  if (price) filter.price = price;
 
   return filter;
 }
 
+// Apply product filters to a Mongoose Query using fixed-field chaining
+function applyProductFilters(qry, query) {
+  const { category, inStock, prescription, q, priceMin, priceMax, type } = query;
+
+  if (typeof type === 'string' && (type === 'medicine' || type === 'health')) {
+    qry = qry.where('type').equals(type);
+  }
+
+  const cat = sanitizeCategory(category);
+  if (cat) qry = qry.where('category').equals(cat);
+
+  const inStockFlag = parseInStockFlag(inStock);
+  if (typeof inStockFlag === 'boolean') qry = qry.where('inStock').equals(inStockFlag);
+
+  if (prescription === 'required') qry = qry.where('prescription').equals(true);
+  if (prescription === 'none') qry = qry.where('prescription').equals(false);
+
+  const or = makeTextSearchOr(q, ['name', 'genericName']);
+  if (or) qry = qry.or(or);
+
+  const price = buildPriceFilter(priceMin, priceMax);
+  if (price) {
+    if (price.$gte !== undefined) qry = qry.where('price').gte(price.$gte);
+    if (price.$lte !== undefined) qry = qry.where('price').lte(price.$lte);
+  }
+
+  return qry;
+}
+
 exports.getProducts = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Math.min(Number(req.query.limit) || 12, 50);
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, 12, 50);
+    const sort = parseSort(req.query.sort);
 
-    const filter = buildFilter(req.query);
+    const countQuery = applyProductFilters(Product.countDocuments(), req.query);
+    const listQuery = applyProductFilters(Product.find(), req.query).sort(sort).skip(skip).limit(limit);
 
-    // sorting
-    let sort = { createdAt: -1 };
-    if (req.query.sort === 'price_asc') sort = { price: 1 };
-    if (req.query.sort === 'price_desc') sort = { price: -1 };
-    if (req.query.sort === 'rating_desc') sort = { rating: -1 };
+    const [total, items] = await Promise.all([countQuery, listQuery]);
 
-    const [total, items] = await Promise.all([
-      Product.countDocuments(filter),
-      Product.find(filter).sort(sort).skip(skip).limit(limit)
-    ]);
-
-    res.json({
-      data: items,
-      page,
-      pages: Math.ceil(total / limit) || 1,
-      total,
-    });
+    res.json({ data: items, page, pages: Math.ceil(total / limit) || 1, total });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
