@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const { hashPassword, verifyPassword, signToken, verifyToken } = require('../utils/auth');
+const { isValidObjectId } = require('../utils/safeQuery');
 
 function normalizeEmail(input) {
   if (typeof input !== 'string') return null;
@@ -57,6 +58,7 @@ exports.me = async (req, res) => {
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
     if (!token) return res.status(401).json({ message: 'No token' });
     const payload = verifyToken(token);
+    if (!isValidObjectId(payload.sub)) return res.status(401).json({ message: 'Invalid token' });
     const user = await User.findById(payload.sub).select('_id name email createdAt');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);

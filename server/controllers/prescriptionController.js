@@ -7,12 +7,17 @@ const ALLOWED_STATUS = ['active', 'pending', 'expired'];
 exports.list = async (req, res) => {
   try {
     const { status } = req.query;
-    const filter = { user: req.userId };
+
+    // Validate user id extracted from auth middleware
+    if (!isValidObjectId(req.userId)) return res.status(401).json({ message: 'Invalid user' });
+
+    // Build a fixed-field query chain; do not construct from raw user input
+    let query = Prescription.find().where('user').equals(req.userId);
     if (status) {
       if (!ALLOWED_STATUS.includes(status)) return res.status(400).json({ message: 'Invalid status' });
-      filter.status = status;
+      query = query.where('status').equals(status);
     }
-    const items = await Prescription.find(filter).sort({ updatedAt: -1 });
+    const items = await query.sort({ updatedAt: -1 });
     res.json(items);
   } catch (err) {
     console.error('List prescriptions error', err);

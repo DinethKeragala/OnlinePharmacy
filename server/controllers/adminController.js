@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const { verifyPassword, signToken, verifyToken } = require('../utils/auth');
-const { normalizeEmail } = require('../utils/safeQuery');
+const { normalizeEmail, isValidObjectId } = require('../utils/safeQuery');
 
 exports.login = async (req, res) => {
   try {
@@ -26,6 +26,7 @@ exports.me = async (req, res) => {
     if (!token) return res.status(401).json({ message: 'No token' });
     const payload = verifyToken(token);
     if (payload.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+    if (!isValidObjectId(payload.sub)) return res.status(401).json({ message: 'Invalid token' });
     const user = await User.findById(payload.sub).select('_id name email role createdAt');
     if (!user) return res.status(404).json({ message: 'Admin not found' });
     res.json(user);
