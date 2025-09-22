@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+
 const PageHeader = ({ title, breadcrumbs }) => {
   return (
     <div className="bg-blue-600 text-white py-8">
@@ -26,3 +28,11 @@ const PageHeader = ({ title, breadcrumbs }) => {
 };
 
 export default PageHeader;
+
+PageHeader.propTypes = {
+  title: PropTypes.string.isRequired,
+  breadcrumbs: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    path: PropTypes.string,
+  })).isRequired,
+}

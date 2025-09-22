@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom'
+import PropTypes from 'prop-types'
 import { getToken } from './services/auth'
 import Navbar from './components/navbar/Navbar'
 import Home from './pages/Home'
@@ -82,4 +83,8 @@ function RequireAdmin({ which }) {
   if (which === 'users') return <AdminUsers />
   if (which === 'medicines') return <AdminMedicines />
   return <AdminDashboard />
+}
+
+RequireAdmin.propTypes = {
+  which: PropTypes.oneOf(['dashboard', 'medicines', 'prescriptions', 'users'])
 }

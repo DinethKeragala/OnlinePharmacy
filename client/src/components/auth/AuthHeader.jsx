@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+
 export default function AuthHeader({ variant = 'user' }) {
   const title = variant === 'admin' ? 'MediCare+ Admin' : 'MediCare+'
   const rightLink = variant === 'admin'
@@ -14,4 +16,8 @@ export default function AuthHeader({ variant = 'user' }) {
       </div>
     </header>
   )
+}
+
+AuthHeader.propTypes = {
+  variant: PropTypes.oneOf(['user', 'admin']),
 }
