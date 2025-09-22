@@ -77,3 +77,47 @@ exports.getCategories = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// Admin: create a new product
+exports.createProduct = async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      genericName,
+      price,
+      category,
+      imageUrl,
+      inStock,
+      stock,
+      prescription,
+      type,
+      tags,
+      rating,
+    } = req.body || {};
+
+    if (!name || !description || typeof price === 'undefined' || !category) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const doc = new Product({
+      name,
+      description,
+      genericName,
+      price,
+      category,
+      imageUrl,
+      inStock,
+      stock,
+      prescription,
+      type: type || 'medicine',
+      tags,
+      rating,
+    });
+    const saved = await doc.save();
+    return res.status(201).json(saved);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};

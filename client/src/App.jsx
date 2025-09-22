@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom'
+import { getToken } from './services/auth'
 import Navbar from './components/navbar/Navbar'
 import Home from './pages/Home'
 import Medicines from './pages/Medicines'
@@ -7,24 +8,62 @@ import Prescriptions from './pages/Prescriptions'
 import Footer from './components/footer/Footer'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import Cart from './pages/Cart'
+import Checkout from './pages/Checkout'
+import ThankYou from './pages/ThankYou'
+import AdminLogin from './pages/admin/AdminLogin'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminMedicines from './pages/admin/AdminMedicines'
+import AdminPrescriptions from './pages/admin/AdminPrescriptions'
+import AdminUsers from './pages/admin/AdminUsers'
+import { isAdminAuthenticated } from './services/adminAuth'
 
 function Shell() {
   const location = useLocation()
-  const hideChrome = location.pathname === '/login' || location.pathname === '/register'
+  const path = location.pathname
+  const hideNavbar = path.startsWith('/admin')
+  const hideFooter = path.startsWith('/admin') || path === '/login' || path === '/register'
   return (
     <div className="min-h-screen bg-gray-50">
-      {!hideChrome && <Navbar />}
+      {!hideNavbar && <Navbar />}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/medicines" element={<Medicines />} />
-        <Route path="/health-products" element={<HealthProducts />} />
-        <Route path="/prescriptions" element={<Prescriptions />} />
+  {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+  <Route path="/admin/login" element={<AdminLogin />} />
+  <Route path="/admin/dashboard" element={<RequireAdmin which="dashboard" />} />
+  <Route path="/admin/medicines" element={<RequireAdmin which="medicines" />} />
+  <Route path="/admin/prescriptions" element={<RequireAdmin which="prescriptions" />} />
+  <Route path="/admin/users" element={<RequireAdmin which="users" />} />
+
+  {/* Homepage should be accessible without login */}
+  <Route path="/" element={<Home />} />
+  {/* Public product browsing */}
+  <Route path="/medicines" element={<Medicines />} />
+  <Route path="/health-products" element={<HealthProducts />} />
+
+        {/* Protected routes */}
+        <Route element={<RequireAuth />}>
+          <Route path="/prescriptions" element={<Prescriptions />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/thank-you" element={<ThankYou />} />
+        </Route>
+
+  {/* Fallback -> Home */}
+  <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {!hideChrome && <Footer />}
+      {!hideFooter && <Footer />}
     </div>
   )
+}
+
+function RequireAuth() {
+  const isAuthed = !!getToken()
+  if (!isAuthed) {
+    return <Navigate to="/login" replace />
+  }
+  return <Outlet />
 }
 
 function App() {
@@ -36,3 +75,11 @@ function App() {
 }
 
 export default App
+
+function RequireAdmin({ which }) {
+  if (!isAdminAuthenticated()) return <Navigate to="/admin/login" replace />
+  if (which === 'prescriptions') return <AdminPrescriptions />
+  if (which === 'users') return <AdminUsers />
+  if (which === 'medicines') return <AdminMedicines />
+  return <AdminDashboard />
+}

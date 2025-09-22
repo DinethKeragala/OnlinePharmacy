@@ -21,6 +21,9 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/health-products', require('./routes/healthProductRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/admin/prescriptions', require('./routes/adminPrescriptionRoutes'));
+app.use('/api/admin/users', require('./routes/adminUserRoutes'));
 
 // Basic route
 app.get('/', (req, res) => {

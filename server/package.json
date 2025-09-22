@@ -7,6 +7,7 @@
     "dev": "nodemon index.js",
     "seed": "node seed.js",
     "seed:rx": "node seedPrescriptions.js",
+    "seed:admin": "node seedAdmin.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

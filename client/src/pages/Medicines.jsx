@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import PageHeader from '../components/common/PageHeader'
 import FiltersSidebar from '../components/products/FiltersSidebar'
 import ProductGrid from '../components/products/ProductGrid'
+import { addItem } from '../services/cart'
+import { isAuthenticated } from '../services/auth'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useToast } from '../components/toast/ToastProvider'
 
 const Medicines = () => {
   const breadcrumbs = [
@@ -68,9 +72,16 @@ const Medicines = () => {
     return () => { mounted = false }
   }, [queryString])
 
+  const navigate = useNavigate()
+  const location = useLocation()
+  const toast = useToast()
   const onAddToCart = (p) => {
-    // TODO: integrate cart state
-    console.log('add to cart', p._id)
+    if (!isAuthenticated()) {
+      const ret = encodeURIComponent(location.pathname + location.search)
+      return navigate(`/login?return=${ret}`)
+    }
+    addItem({ id: p._id, name: p.name, price: p.price, image: p.imageUrl, quantity: 1 })
+    toast.show('Cart updated', { type: 'success', duration: 1800 })
   }
 
   return (

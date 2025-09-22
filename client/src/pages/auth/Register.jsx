@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import { registerUser } from '../../services/auth'
+import AuthHeader from '../../components/auth/AuthHeader'
 
 export default function Register() {
   const [name, setName] = useState('')
@@ -27,60 +29,123 @@ export default function Register() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <form onSubmit={onSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-5">
+    <div className="min-h-screen bg-gray-100">
+      <AuthHeader variant="user" />
+      <div className="w-full max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <form onSubmit={onSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900">Create Your Account</h1>
             <p className="mt-2 text-gray-600">Join MediCare+ for a healthier tomorrow</p>
           </div>
 
-          {error && <div className="rounded bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
+          {error && (
+            <div className="rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm border border-red-100">
+              {error}
+            </div>
+          )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-800">Full Name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-800">Full Name</label>
             <div className="mt-1 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">👤</span>
-              <input className="w-full rounded-lg border-gray-300 pl-9" placeholder="Enter your full name" value={name} onChange={(e)=>setName(e.target.value)} required />
+              <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                id="name"
+                className="w-full h-12 rounded-lg border-2 border-gray-300 bg-gray-50 pl-10 placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                placeholder="Enter your full name"
+                value={name}
+                onChange={(e)=>setName(e.target.value)}
+                required
+              />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800">Email Address</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-800">Email Address</label>
             <div className="mt-1 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">📧</span>
-              <input type="email" className="w-full rounded-lg border-gray-300 pl-9" placeholder="Enter your email" value={email} onChange={(e)=>setEmail(e.target.value)} required />
+              <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                className="w-full h-12 rounded-lg border-2 border-gray-300 bg-gray-50 pl-10 placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e)=>setEmail(e.target.value)}
+                required
+              />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-800">Password</label>
             <div className="mt-1 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
-              <input type={showPwd ? 'text' : 'password'} className="w-full rounded-lg border-gray-300 pl-9 pr-9" placeholder="Create a password" value={password} onChange={(e)=>setPassword(e.target.value)} required />
-              <button type="button" onClick={()=>setShowPwd(v=>!v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" aria-label="Toggle password visibility">{showPwd ? '�' : '�👁️'}</button>
+              <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                id="password"
+                type={showPwd ? 'text' : 'password'}
+                autoComplete="new-password"
+                className="w-full h-12 rounded-lg border-2 border-gray-300 bg-gray-50 pl-10 pr-10 placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                placeholder="Create a password"
+                value={password}
+                onChange={(e)=>setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={()=>setShowPwd(v=>!v)}
+                tabIndex={-1}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="Toggle password visibility"
+              >
+                {showPwd ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800">Confirm Password</label>
+            <label htmlFor="confirm" className="block text-sm font-medium text-gray-800">Confirm Password</label>
             <div className="mt-1 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
-              <input type={showPwd2 ? 'text' : 'password'} className="w-full rounded-lg border-gray-300 pl-9 pr-9" placeholder="Confirm your password" value={confirm} onChange={(e)=>setConfirm(e.target.value)} required />
-              <button type="button" onClick={()=>setShowPwd2(v=>!v)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" aria-label="Toggle password visibility">{showPwd2 ? '🙈' : '👁️'}</button>
+              <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                id="confirm"
+                type={showPwd2 ? 'text' : 'password'}
+                autoComplete="new-password"
+                className="w-full h-12 rounded-lg border-2 border-gray-300 bg-gray-50 pl-10 pr-10 placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                placeholder="Confirm your password"
+                value={confirm}
+                onChange={(e)=>setConfirm(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={()=>setShowPwd2(v=>!v)}
+                tabIndex={-1}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="Toggle password visibility"
+              >
+                {showPwd2 ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
             </div>
           </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" className="rounded border-gray-300" required />
+            <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" required />
             I agree to the <a className="text-blue-600 hover:underline" href="#">Terms of Service</a> and <a className="text-blue-600 hover:underline" href="#">Privacy Policy</a>
           </label>
 
-          <button disabled={loading} className="w-full rounded-xl bg-blue-600 text-white py-3 font-semibold disabled:opacity-50">{loading ? 'Creating Account…' : 'Create Account'}</button>
+          <button
+            disabled={loading}
+            className="w-full rounded-xl bg-blue-600 text-white py-3 font-semibold disabled:opacity-50 hover:bg-blue-700 transition-colors"
+          >
+            {loading ? 'Creating Account…' : 'Create Account'}
+          </button>
 
           <div className="text-center text-gray-600">
-            Already have an account? <Link to="/login" className="text-blue-600 font-medium hover:underline">Sign In</Link>
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 font-medium hover:underline">Sign In</Link>
           </div>
         </form>
+      </div>
     </div>
   )
 }

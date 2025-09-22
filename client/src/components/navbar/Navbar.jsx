@@ -1,11 +1,35 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaShoppingCart, FaUser, FaBars, FaTimes } from 'react-icons/fa';
 import { FiSearch } from 'react-icons/fi';
+import { isAuthenticated, clearToken } from '../../services/auth';
+import { getCount, subscribe as subscribeCart } from '../../services/cart';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [authed, setAuthed] = useState(isAuthenticated());
+  const navigate = useNavigate();
+  const [cartCount, setCartCount] = useState(getCount());
+
+  useEffect(() => {
+    // Keep a lightweight auth state; update on storage changes (another tab) too
+    const onStorage = (e) => {
+      if (e.key === 'auth_token') setAuthed(isAuthenticated());
+    };
+    window.addEventListener('storage', onStorage);
+    const unsubCart = subscribeCart(() => setCartCount(getCount()));
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      unsubCart();
+    };
+  }, []);
+
+  const onLogout = () => {
+    clearToken();
+    setAuthed(false);
+    navigate('/login', { replace: true });
+  };
 
   const navLinks = [
     { title: 'Home', href: '/' },
@@ -61,15 +85,24 @@ const Navbar = () => {
                 <FiSearch size={18} />
               </button>
             </form>
-            <a href="/profile" className="text-gray-600 hover:text-blue-600">
-              <FaUser size={20} />
-            </a>
-            <a href="/cart" className="text-gray-600 hover:text-blue-600 relative">
+            {authed ? (
+              <button onClick={onLogout} className="text-gray-600 hover:text-blue-600 text-sm font-medium">Logout</button>
+            ) : (
+              <Link to="/login" className="text-gray-600 hover:text-blue-600">
+                <FaUser size={20} />
+              </Link>
+            )}
+            {!authed && (
+              <Link to="/admin/login" className="text-gray-600 hover:text-blue-600 text-sm font-medium">Admin</Link>
+            )}
+            <Link to="/cart" className="text-gray-600 hover:text-blue-600 relative">
               <FaShoppingCart size={20} />
-              <span className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                3
-              </span>
-            </a>
+              {!!cartCount && (
+                <span className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full min-w-5 h-5 px-1 flex items-center justify-center text-xs">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -108,25 +141,33 @@ const Navbar = () => {
           </div>
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.title}
-                href={link.href}
+                to={link.href}
+                onClick={() => setIsMenuOpen(false)}
                 className="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium"
               >
                 {link.title}
-              </a>
+              </Link>
             ))}
           </div>
           <div className="px-4 py-3 border-t border-gray-200 flex justify-around">
-            <a href="/profile" className="text-gray-600 hover:text-blue-600">
-              <FaUser size={20} />
-            </a>
-            <a href="/cart" className="text-gray-600 hover:text-blue-600 relative">
+            {authed ? (
+              <button onClick={onLogout} className="text-gray-600 hover:text-blue-600 text-sm font-medium">Logout</button>
+            ) : (
+              <Link to="/login" className="text-gray-600 hover:text-blue-600">
+                <FaUser size={20} />
+              </Link>
+            )}
+            {!authed && (
+              <Link to="/admin/login" className="text-gray-600 hover:text-blue-600 text-sm font-medium">Admin</Link>
+            )}
+            <Link to="/cart" className="text-gray-600 hover:text-blue-600 relative">
               <FaShoppingCart size={20} />
               <span className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                 3
               </span>
-            </a>
+            </Link>
           </div>
         </div>
       )}

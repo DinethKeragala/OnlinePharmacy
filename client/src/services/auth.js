@@ -1,7 +1,17 @@
 const TOKEN_KEY = 'auth_token'
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY)
+  // Prefer localStorage, but fall back to sessionStorage to support non-remembered sessions
+  return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY)
+}
+
+export function clearToken() {
+  try { localStorage.removeItem(TOKEN_KEY) } catch {}
+  try { sessionStorage.removeItem(TOKEN_KEY) } catch {}
+}
+
+export function isAuthenticated() {
+  return !!getToken()
 }
 
 export function setToken(token) {
