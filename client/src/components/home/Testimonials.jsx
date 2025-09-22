@@ -1,4 +1,5 @@
 import { FaStar } from 'react-icons/fa'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 
 const testimonials = [
@@ -39,6 +40,9 @@ function Stars({ n }) {
       ))}
     </div>
   )
+}
+Stars.propTypes = {
+  n: PropTypes.number.isRequired,
 }
 
 export default function Testimonials() {

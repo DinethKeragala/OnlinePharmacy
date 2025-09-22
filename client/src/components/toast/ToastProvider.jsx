@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import PropTypes from 'prop-types'
 
 const ToastCtx = createContext({ show: () => {} })
 
@@ -39,6 +40,10 @@ export function ToastProvider({ children }) {
       </div>
     </ToastCtx.Provider>
   )
+}
+
+ToastProvider.propTypes = {
+  children: PropTypes.node,
 }
 
 export function useToast() {

@@ -1,4 +1,5 @@
 import ProductCard from './ProductCard'
+import PropTypes from 'prop-types'
 
 export default function ProductGrid({ products, onAddToCart, onToggleWish }) {
   if (!products?.length) {
@@ -19,4 +20,10 @@ export default function ProductGrid({ products, onAddToCart, onToggleWish }) {
       ))}
     </div>
   )
+}
+
+ProductGrid.propTypes = {
+  products: PropTypes.arrayOf(PropTypes.object).isRequired,
+  onAddToCart: PropTypes.func,
+  onToggleWish: PropTypes.func,
 }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import PropTypes from 'prop-types'
 import { Link, Navigate } from 'react-router-dom'
 import { clearAdminToken, fetchAdminMe, getAdminToken, isAdminAuthenticated } from '../../services/adminAuth'
 
@@ -11,6 +12,9 @@ function StatusPill({ s }) {
   const label = s === 'approved' ? 'Approved' : s === 'rejected' ? 'Rejected' : 'Pending'
   const cls = map[s] || map.pending
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${cls}`}>{label}</span>
+}
+StatusPill.propTypes = {
+  s: PropTypes.oneOf(['approved', 'pending', 'rejected']).isRequired,
 }
 
 function formatDate(d) { try { return new Date(d).toISOString().slice(0,10) } catch { return '' } }

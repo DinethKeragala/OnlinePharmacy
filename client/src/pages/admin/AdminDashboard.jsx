@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import PropTypes from 'prop-types'
 import { Link, Navigate } from 'react-router-dom'
 import { clearAdminToken, fetchAdminMe, getAdminToken, isAdminAuthenticated } from '../../services/adminAuth'
 
@@ -20,6 +21,12 @@ function StatCard({ title, value, icon, color = 'blue' }) {
       </div>
     </div>
   )
+}
+StatCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  icon: PropTypes.node,
+  color: PropTypes.oneOf(['blue', 'yellow', 'green', 'purple']),
 }
 
 export default function AdminDashboard() {

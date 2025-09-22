@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import PropTypes from 'prop-types'
 import PageHeader from '../components/common/PageHeader'
 import { FaClipboardList, FaClock, FaUpload, FaSyncAlt } from 'react-icons/fa'
 import { fetchPrescriptions, requestRefill, createPrescription } from '../services/prescriptions'
@@ -23,6 +24,13 @@ function StatCard({ icon, title, value, subtitle, action }) {
     </div>
   )
 }
+StatCard.propTypes = {
+  icon: PropTypes.node,
+  title: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  subtitle: PropTypes.string,
+  action: PropTypes.node,
+}
 
 function StatusPill({ text, color = 'green' }) {
   const palette = {
@@ -34,6 +42,10 @@ function StatusPill({ text, color = 'green' }) {
   }[color]
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${palette}`}>{text}</span>
 }
+StatusPill.propTypes = {
+  text: PropTypes.string.isRequired,
+  color: PropTypes.oneOf(['green', 'yellow', 'red', 'blue', 'gray']),
+}
 
 function TabButton({ active, children, onClick }) {
   return (
@@ -44,6 +56,11 @@ function TabButton({ active, children, onClick }) {
       {children}
     </button>
   )
+}
+TabButton.propTypes = {
+  active: PropTypes.bool,
+  children: PropTypes.node,
+  onClick: PropTypes.func,
 }
 
 function UploadModal({ open, onClose, onCreated }) {
@@ -118,6 +135,11 @@ function UploadModal({ open, onClose, onCreated }) {
       </div>
     </div>
   )
+}
+UploadModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onCreated: PropTypes.func,
 }
 
 const Prescriptions = () => {

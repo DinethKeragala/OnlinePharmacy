@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+
 export default function FiltersSidebar({ filters, onChange, categories, showPrescription = true }) {
   const update = (patch) => onChange({ ...filters, ...patch })
 
@@ -93,4 +95,18 @@ export default function FiltersSidebar({ filters, onChange, categories, showPres
       </div>
     </aside>
   )
+}
+
+FiltersSidebar.propTypes = {
+  filters: PropTypes.shape({
+    category: PropTypes.string,
+    price: PropTypes.string,
+    priceMin: PropTypes.number,
+    priceMax: PropTypes.number,
+    prescription: PropTypes.string,
+    inStock: PropTypes.string,
+  }).isRequired,
+  onChange: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string),
+  showPrescription: PropTypes.bool,
 }

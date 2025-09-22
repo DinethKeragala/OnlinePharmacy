@@ -196,6 +196,8 @@ export default function Checkout() {
   )
 }
 
+import PropTypes from 'prop-types'
+
 function Field({ label, children, required, error }) {
   return (
     <label className="block">
@@ -207,4 +209,11 @@ function Field({ label, children, required, error }) {
       {error && <div className="mt-1 text-sm text-red-600">{error}</div>}
     </label>
   )
+}
+
+Field.propTypes = {
+  label: PropTypes.string.isRequired,
+  children: PropTypes.node,
+  required: PropTypes.bool,
+  error: PropTypes.string,
 }

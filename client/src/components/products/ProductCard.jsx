@@ -1,4 +1,5 @@
 import { FaShoppingCart, FaRegHeart, FaStar } from 'react-icons/fa'
+import PropTypes from 'prop-types'
 
 export default function ProductCard({ product, onAddToCart, onToggleWish }) {
   const {
@@ -74,4 +75,20 @@ export default function ProductCard({ product, onAddToCart, onToggleWish }) {
       </div>
     </div>
   )
+}
+
+ProductCard.propTypes = {
+  product: PropTypes.shape({
+    _id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    genericName: PropTypes.string,
+    price: PropTypes.number.isRequired,
+    category: PropTypes.string,
+    imageUrl: PropTypes.string,
+    inStock: PropTypes.bool,
+    prescription: PropTypes.bool,
+    rating: PropTypes.number,
+  }).isRequired,
+  onAddToCart: PropTypes.func,
+  onToggleWish: PropTypes.func,
 }
