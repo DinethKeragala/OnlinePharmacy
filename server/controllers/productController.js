@@ -22,7 +22,7 @@ function buildFilter(query) {
   if (prescription === 'required') filter.prescription = true;
   if (prescription === 'none') filter.prescription = false;
   if (q) {
-    const rx = safeRegexContains(q);
+    const rx = safeRegexContains(String(q).slice(0, 128));
     filter.$or = [ { name: rx }, { genericName: rx } ];
   }
   const price = {};

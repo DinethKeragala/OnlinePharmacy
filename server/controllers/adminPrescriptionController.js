@@ -23,7 +23,7 @@ exports.list = async (req, res) => {
     if (status) filter.status = status;
     const q = req.query.q && String(req.query.q).trim();
     if (q) {
-      const rx = safeRegexContains(q);
+      const rx = safeRegexContains(String(q).slice(0, 128));
       filter.$or = [ { name: rx }, { doctor: rx }, { rxNumber: rx } ];
     }
 

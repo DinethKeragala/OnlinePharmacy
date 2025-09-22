@@ -11,7 +11,7 @@ exports.list = async (req, res) => {
 
     const userFilter = {};
     if (q) {
-      const rx = safeRegexContains(q);
+      const rx = safeRegexContains(String(q).slice(0, 128));
       userFilter.$or = [ { name: rx }, { email: rx } ];
     }
 

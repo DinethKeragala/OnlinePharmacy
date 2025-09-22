@@ -13,7 +13,7 @@ function buildFilter(query) {
   }
   if (typeof inStock !== 'undefined') filter.inStock = inStock === 'true';
   if (q) {
-    const rx = safeRegexContains(q);
+    const rx = safeRegexContains(String(q).slice(0, 128));
     filter.$or = [ { name: rx }, { genericName: rx } ];
   }
   const price = {};
