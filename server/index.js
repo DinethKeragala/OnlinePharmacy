@@ -24,6 +24,8 @@ app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/admin/prescriptions', require('./routes/adminPrescriptionRoutes'));
 app.use('/api/admin/users', require('./routes/adminUserRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/admin/stats', require('./routes/adminStatsRoutes'));
 
 // Basic route
 app.get('/', (req, res) => {

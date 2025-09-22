@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { clearAdminToken, fetchAdminMe, getAdminToken, isAdminAuthenticated } from '../../services/adminAuth'
 
-export default function AdminMedicines() {
+export default function AdminHealthProducts() {
   const [me, setMe] = useState(null)
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState([])
@@ -19,7 +19,6 @@ export default function AdminMedicines() {
     category: '',
     price: '',
     stock: '',
-    prescription: false,
     imageUrl: ''
   })
 
@@ -31,8 +30,8 @@ export default function AdminMedicines() {
       if (mounted) setMe(meRes)
       try {
         const [listRes, catRes] = await Promise.all([
-          fetch('/api/products?type=medicine&limit=50'),
-          fetch('/api/products/categories?type=medicine'),
+          fetch('/api/health-products?limit=50'),
+          fetch('/api/health-products/categories'),
         ])
         const listJson = listRes.ok ? await listRes.json() : { data: [] }
         const catsJson = catRes.ok ? await catRes.json() : []
@@ -40,7 +39,7 @@ export default function AdminMedicines() {
         setItems(listJson.data || [])
         setCategories(catsJson || [])
       } catch {
-        if (mounted) setError('Failed to load medicines')
+        if (mounted) setError('Failed to load health products')
       } finally {
         if (mounted) setLoading(false)
       }
@@ -66,9 +65,8 @@ export default function AdminMedicines() {
         price: Number(form.price),
         stock: Number(form.stock || 0),
         inStock: Number(form.stock || 0) > 0,
-        type: 'medicine',
       }
-      const url = editId ? `/api/products/${editId}` : '/api/products'
+      const url = editId ? `/api/health-products/${editId}` : '/api/health-products'
       const method = editId ? 'PUT' : 'POST'
       const res = await fetch(url, {
         method,
@@ -80,7 +78,7 @@ export default function AdminMedicines() {
       })
       if (!res.ok) {
         const t = await res.json().catch(() => ({}))
-        throw new Error(t.message || (editId ? 'Failed to update medicine' : 'Failed to create medicine'))
+        throw new Error(t.message || (editId ? 'Failed to update health product' : 'Failed to create health product'))
       }
       const created = await res.json()
       setItems((arr) => {
@@ -88,7 +86,7 @@ export default function AdminMedicines() {
         return arr.map((it) => (it._id === created._id ? created : it))
       })
       setShowForm(false)
-      setForm({ name: '', genericName: '', description: '', category: '', price: '', stock: '', prescription: false, imageUrl: '' })
+      setForm({ name: '', genericName: '', description: '', category: '', price: '', stock: '', imageUrl: '' })
       setEditId(null)
     } catch (e) {
       setError(e.message || 'Failed to save')
@@ -98,10 +96,10 @@ export default function AdminMedicines() {
   }
 
   async function onDelete(id) {
-    if (!window.confirm('Delete this medicine?')) return
+    if (!window.confirm('Delete this item?')) return
     try {
       const token = getAdminToken()
-      const res = await fetch(`/api/products/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`/api/health-products/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
       if (!res.ok && res.status !== 204) throw new Error('Delete failed')
       setItems((arr) => arr.filter((x) => x._id !== id))
     } catch (e) {
@@ -136,7 +134,7 @@ export default function AdminMedicines() {
               { label: 'Prescriptions', to: '/admin/prescriptions' },
               { label: 'Users', to: '/admin/users' },
             ].map((i) => (
-              <Link key={i.label} to={i.to} className={`block px-3 py-2 rounded-lg hover:bg-blue-50 ${i.to === '/admin/medicines' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}>
+              <Link key={i.label} to={i.to} className={`block px-3 py-2 rounded-lg hover:bg-blue-50 ${i.to === '/admin/health-products' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}>
                 {i.label}
               </Link>
             ))}
@@ -148,10 +146,10 @@ export default function AdminMedicines() {
         <main className="col-span-12 md:col-span-9 lg:col-span-10 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Manage Medicines</h1>
-              <p className="text-gray-600">Create and manage medicines visible on the public Medicines page.</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Manage Health Products</h1>
+              <p className="text-gray-600">Create and manage items visible on the Health Products page.</p>
             </div>
-            <button onClick={() => { setShowForm((s) => !s); if (showForm) setEditId(null) }} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">{showForm ? 'Close' : 'Add Medicine'}</button>
+            <button onClick={() => { setShowForm((s) => !s); if (showForm) setEditId(null) }} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">{showForm ? 'Close' : 'Add Product'}</button>
           </div>
 
           {error && <div className="rounded-lg bg-red-50 text-red-700 px-4 py-3">{error}</div>}
@@ -189,24 +187,20 @@ export default function AdminMedicines() {
                 <label className="block text-sm text-gray-600 mb-1">Image URL</label>
                 <input value={form.imageUrl} onChange={(e) => update('imageUrl', e.target.value)} className="w-full border rounded-lg px-3 py-2 bg-gray-50" />
               </div>
-              <div className="flex items-center gap-2">
-                <input id="rx" type="checkbox" checked={form.prescription} onChange={(e) => update('prescription', e.target.checked)} />
-                <label htmlFor="rx" className="text-sm text-gray-700">Prescription required</label>
-              </div>
               <div className="md:col-span-2 flex justify-between">
-                <div className="text-sm text-gray-500">{editId ? 'Editing existing medicine' : 'Creating new medicine'}</div>
+                <div className="text-sm text-gray-500">{editId ? 'Editing existing product' : 'Creating new product'}</div>
                 <div className="space-x-2">
                   {editId && (
-                    <button type="button" onClick={() => { setEditId(null); setForm({ name: '', genericName: '', description: '', category: '', price: '', stock: '', prescription: false, imageUrl: '' }) }} className="px-4 py-2 rounded-lg border text-gray-700 hover:bg-gray-50">Cancel Edit</button>
+                    <button type="button" onClick={() => { setEditId(null); setForm({ name: '', genericName: '', description: '', category: '', price: '', stock: '', imageUrl: '' }); }} className="px-4 py-2 rounded-lg border text-gray-700 hover:bg-gray-50">Cancel Edit</button>
                   )}
-                  <button disabled={saving} type="submit" className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50">{saving ? 'Saving...' : (editId ? 'Update Medicine' : 'Save Medicine')}</button>
+                  <button disabled={saving} type="submit" className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50">{saving ? 'Saving...' : (editId ? 'Update Product' : 'Save Product')}</button>
                 </div>
               </div>
             </form>
           )}
 
           <div className="bg-white border rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b font-semibold text-gray-900">Existing Medicines</div>
+            <div className="px-4 py-3 border-b font-semibold text-gray-900">Existing Health Products</div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -215,7 +209,6 @@ export default function AdminMedicines() {
                     <th className="py-2 px-4">Category</th>
                     <th className="py-2 px-4">Price</th>
                     <th className="py-2 px-4">Stock</th>
-                    <th className="py-2 px-4">Prescription</th>
                     <th className="py-2 px-4">Actions</th>
                   </tr>
                 </thead>
@@ -234,16 +227,15 @@ export default function AdminMedicines() {
                       <td className="py-2 px-4">{p.category}</td>
                       <td className="py-2 px-4">${p.price?.toFixed ? p.price.toFixed(2) : p.price}</td>
                       <td className="py-2 px-4">{typeof p.stock === 'number' ? p.stock : (p.inStock ? 'In stock' : 'Out')}</td>
-                      <td className="py-2 px-4">{p.prescription ? 'Required' : 'No'}</td>
                       <td className="py-2 px-4 space-x-3">
-                        <button onClick={() => { setShowForm(true); setEditId(p._id); setForm({ name: p.name || '', genericName: p.genericName || '', description: p.description || '', category: p.category || '', price: p.price ?? '', stock: p.stock ?? '', prescription: !!p.prescription, imageUrl: p.imageUrl || '' }) }} className="text-blue-600 hover:underline">Edit</button>
+                        <button onClick={() => { setShowForm(true); setEditId(p._id); setForm({ name: p.name || '', genericName: p.genericName || '', description: p.description || '', category: p.category || '', price: p.price ?? '', stock: p.stock ?? '', imageUrl: p.imageUrl || '' }); }} className="text-blue-600 hover:underline">Edit</button>
                         <button onClick={() => onDelete(p._id)} className="text-red-600 hover:underline">Delete</button>
                       </td>
                     </tr>
                   ))}
                   {items.length === 0 && (
                     <tr>
-                      <td className="py-6 text-center text-gray-500" colSpan={6}>No medicines yet.</td>
+                      <td className="py-6 text-center text-gray-500" colSpan={5}>No health products yet.</td>
                     </tr>
                   )}
                 </tbody>

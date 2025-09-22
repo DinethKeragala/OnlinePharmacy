@@ -15,6 +15,7 @@ import ThankYou from './pages/ThankYou'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminMedicines from './pages/admin/AdminMedicines'
+import AdminHealthProducts from './pages/admin/AdminHealthProducts'
 import AdminPrescriptions from './pages/admin/AdminPrescriptions'
 import AdminUsers from './pages/admin/AdminUsers'
 import { isAdminAuthenticated } from './services/adminAuth'
@@ -34,6 +35,7 @@ function Shell() {
   <Route path="/admin/login" element={<AdminLogin />} />
   <Route path="/admin/dashboard" element={<RequireAdmin which="dashboard" />} />
   <Route path="/admin/medicines" element={<RequireAdmin which="medicines" />} />
+  <Route path="/admin/health-products" element={<RequireAdmin which="health-products" />} />
   <Route path="/admin/prescriptions" element={<RequireAdmin which="prescriptions" />} />
   <Route path="/admin/users" element={<RequireAdmin which="users" />} />
 
@@ -82,9 +84,10 @@ function RequireAdmin({ which }) {
   if (which === 'prescriptions') return <AdminPrescriptions />
   if (which === 'users') return <AdminUsers />
   if (which === 'medicines') return <AdminMedicines />
+  if (which === 'health-products') return <AdminHealthProducts />
   return <AdminDashboard />
 }
 
 RequireAdmin.propTypes = {
-  which: PropTypes.oneOf(['dashboard', 'medicines', 'prescriptions', 'users'])
+  which: PropTypes.oneOf(['dashboard', 'medicines', 'health-products', 'prescriptions', 'users'])
 }

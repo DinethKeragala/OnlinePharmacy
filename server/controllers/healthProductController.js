@@ -9,6 +9,97 @@ const {
   parseSort,
 } = require('../utils/queryBuilders');
 
+// --- Helpers for creation/update validation/sanitization ---
+function badRequest(message) {
+  const e = new Error(message);
+  e.status = 400;
+  return e;
+}
+
+function toFiniteNumber(val) {
+  if (val === null || val === undefined) return null;
+  const n = Number(val);
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseImageUrl(val) {
+  if (typeof val !== 'string') return undefined;
+  const u = val.trim();
+  if (u && u.length <= 1024 && /^(https?:)\/\//i.test(u)) return u;
+  return undefined;
+}
+
+function sanitizeTags(arr) {
+  if (!Array.isArray(arr)) return undefined;
+  const tags = arr
+    .filter((t) => typeof t === 'string')
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, 20)
+    .map((t) => t.slice(0, 50));
+  return tags.length ? tags : undefined;
+}
+
+function sanitizeCreateHealthProduct(body) {
+  const src = body || {};
+  const name = typeof src.name === 'string' ? src.name.trim().slice(0, 200) : '';
+  const description = typeof src.description === 'string' ? src.description.trim().slice(0, 5000) : '';
+  const genericName = typeof src.genericName === 'string' ? src.genericName.trim().slice(0, 200) : undefined;
+
+  const category = sanitizeCategory(typeof src.category === 'string' ? src.category.trim() : undefined) || '';
+
+  const priceNum = toFiniteNumber(src.price);
+  const price = priceNum !== null ? Math.max(0, priceNum) : null;
+
+  const stockNum = toFiniteNumber(src.stock);
+  const stock = stockNum !== null ? Math.max(0, Math.floor(stockNum)) : 0;
+  const inStock = typeof src.inStock === 'boolean' ? src.inStock : stock > 0;
+
+  const ratingNum = toFiniteNumber(src.rating);
+  const rating = ratingNum !== null ? Math.max(0, Math.min(5, ratingNum)) : undefined;
+
+  const imageUrl = parseImageUrl(src.imageUrl);
+  const tags = sanitizeTags(src.tags);
+
+  if (!name || !description || price === null || !category) {
+    throw badRequest('Missing or invalid required fields');
+  }
+
+  return { name, description, genericName, price, category, imageUrl, inStock, stock, tags, rating };
+}
+
+function sanitizeUpdateHealthProduct(body) {
+  const src = body || {};
+  const update = {};
+  if (typeof src.name === 'string') update.name = src.name.trim().slice(0, 200);
+  if (typeof src.description === 'string') update.description = src.description.trim().slice(0, 5000);
+  if (typeof src.genericName === 'string') update.genericName = src.genericName.trim().slice(0, 200);
+
+  if (typeof src.category === 'string') {
+    const cat = sanitizeCategory(src.category.trim());
+    if (cat) update.category = cat;
+  }
+
+  const priceNum = toFiniteNumber(src.price);
+  if (priceNum !== null) update.price = Math.max(0, priceNum);
+
+  const stockNum = toFiniteNumber(src.stock);
+  if (stockNum !== null) update.stock = Math.max(0, Math.floor(stockNum));
+
+  if (typeof src.inStock === 'boolean') update.inStock = src.inStock;
+
+  const ratingNum = toFiniteNumber(src.rating);
+  if (ratingNum !== null) update.rating = Math.max(0, Math.min(5, ratingNum));
+
+  const imageUrl = parseImageUrl(src.imageUrl);
+  if (imageUrl !== undefined) update.imageUrl = imageUrl;
+
+  const tags = sanitizeTags(src.tags);
+  if (tags !== undefined) update.tags = tags;
+
+  return update;
+}
+
 function buildFilter(query) {
   const filter = {};
   const { category, inStock, q, priceMin, priceMax } = query;
@@ -92,5 +183,49 @@ exports.getHealthCategories = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Admin: create a new health product
+exports.createHealthProduct = async (req, res) => {
+  try {
+    const payload = sanitizeCreateHealthProduct(req.body);
+    const saved = await new HealthProduct(payload).save();
+    return res.status(201).json(saved);
+  } catch (err) {
+    console.error(err);
+    if (err && err.status === 400) return res.status(400).json({ message: err.message });
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Admin: update an existing health product
+exports.updateHealthProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
+    const update = sanitizeUpdateHealthProduct(req.body);
+    if (!update || Object.keys(update).length === 0) throw badRequest('No valid fields to update');
+    const saved = await HealthProduct.findByIdAndUpdate(id, { $set: update }, { new: true });
+    if (!saved) return res.status(404).json({ message: 'Not found' });
+    return res.json(saved);
+  } catch (err) {
+    console.error(err);
+    if (err && err.status === 400) return res.status(400).json({ message: err.message });
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Admin: delete a health product
+exports.deleteHealthProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
+    const del = await HealthProduct.findByIdAndDelete(id);
+    if (!del) return res.status(404).json({ message: 'Not found' });
+    return res.status(204).send();
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
   }
 };

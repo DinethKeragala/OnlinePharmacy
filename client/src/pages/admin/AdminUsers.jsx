@@ -59,6 +59,7 @@ export default function AdminUsers() {
             {[
               { label: 'Dashboard', to: '/admin/dashboard' },
               { label: 'Medicines', to: '/admin/medicines' },
+              { label: 'Health Products', to: '/admin/health-products' },
               { label: 'Prescriptions', to: '/admin/prescriptions' },
               { label: 'Users', to: '/admin/users' },
             ].map((i) => (

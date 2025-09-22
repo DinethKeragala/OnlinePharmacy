@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
 
-const ToastCtx = createContext({ show: () => {} })
+export const ToastCtx = createContext({ show: () => {} })
 
 let idSeq = 1
 
@@ -46,6 +46,5 @@ ToastProvider.propTypes = {
   children: PropTypes.node,
 }
 
-export function useToast() {
-  return useContext(ToastCtx)
-}
+// Note: useToast is exported from a separate file (useToast.js) to keep this file
+// exporting only a component for better React Fast Refresh compatibility.

@@ -5,7 +5,7 @@ import ProductGrid from '../components/products/ProductGrid'
 import { addItem } from '../services/cart'
 import { isAuthenticated } from '../services/auth'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useToast } from '../components/toast/ToastProvider'
+import { useToast } from '../components/toast/useToast'
 
 const Medicines = () => {
   const breadcrumbs = [
@@ -80,7 +80,7 @@ const Medicines = () => {
       const ret = encodeURIComponent(location.pathname + location.search)
       return navigate(`/login?return=${ret}`)
     }
-    addItem({ id: p._id, name: p.name, price: p.price, image: p.imageUrl, quantity: 1 })
+    addItem({ id: p._id, name: p.name, price: p.price, image: p.imageUrl, quantity: 1, kind: 'product' })
     toast.show('Cart updated', { type: 'success', duration: 1800 })
   }
 

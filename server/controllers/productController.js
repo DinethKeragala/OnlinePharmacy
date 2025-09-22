@@ -69,6 +69,42 @@ function sanitizeCreateProduct(body) {
   return { name, description, genericName, price, category, imageUrl, inStock, stock, prescription, type, tags, rating };
 }
 
+function sanitizeUpdateProduct(body) {
+  const src = body || {};
+  const update = {};
+
+  if (typeof src.name === 'string') update.name = src.name.trim().slice(0, 200);
+  if (typeof src.description === 'string') update.description = src.description.trim().slice(0, 5000);
+  if (typeof src.genericName === 'string') update.genericName = src.genericName.trim().slice(0, 200);
+
+  if (typeof src.type === 'string') update.type = sanitizeType(src.type);
+
+  if (typeof src.category === 'string') {
+    const cat = sanitizeCategory(src.category.trim());
+    if (cat) update.category = cat;
+  }
+
+  const priceNum = toFiniteNumber(src.price);
+  if (priceNum !== null) update.price = Math.max(0, priceNum);
+
+  const stockNum = toFiniteNumber(src.stock);
+  if (stockNum !== null) update.stock = Math.max(0, Math.floor(stockNum));
+
+  if (typeof src.inStock === 'boolean') update.inStock = src.inStock;
+  if (typeof src.prescription === 'boolean') update.prescription = src.prescription;
+
+  const ratingNum = toFiniteNumber(src.rating);
+  if (ratingNum !== null) update.rating = Math.max(0, Math.min(5, ratingNum));
+
+  const imageUrl = parseImageUrl(src.imageUrl);
+  if (imageUrl !== undefined) update.imageUrl = imageUrl;
+
+  const tags = sanitizeTags(src.tags);
+  if (tags !== undefined) update.tags = tags;
+
+  return update;
+}
+
 // Build Mongo filter from query params
 function buildFilter(query) {
   const filter = {};
@@ -184,6 +220,36 @@ exports.createProduct = async (req, res) => {
   } catch (err) {
     console.error(err);
     if (err && err.status === 400) return res.status(400).json({ message: err.message });
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Admin: update a product
+exports.updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
+    const update = sanitizeUpdateProduct(req.body);
+    if (!update || Object.keys(update).length === 0) return res.status(400).json({ message: 'No valid fields to update' });
+    const saved = await Product.findByIdAndUpdate(id, { $set: update }, { new: true });
+    if (!saved) return res.status(404).json({ message: 'Not found' });
+    return res.json(saved);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Admin: delete a product
+exports.deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
+    const del = await Product.findByIdAndDelete(id);
+    if (!del) return res.status(404).json({ message: 'Not found' });
+    return res.status(204).send();
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ message: 'Server error' });
   }
 };

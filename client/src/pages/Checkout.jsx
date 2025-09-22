@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import PageHeader from '../components/common/PageHeader'
 import { Link, useNavigate } from 'react-router-dom'
 import { subtotal as cartSubtotal, subscribe, getItems, clearCart } from '../services/cart'
+import { getToken } from '../services/auth'
 
 const formatCurrency = (n) => `$${n.toLocaleString()}`
 
@@ -46,10 +47,22 @@ export default function Checkout() {
     if (!validate()) return
     setPlacing(true)
     try {
-      // Stub: Here you would POST order to backend
-      await new Promise((r) => setTimeout(r, 600))
-  clearCart()
-  navigate('/thank-you', { replace: true })
+      const token = getToken()
+      const payload = {
+        payment,
+        items: items.map((it) => ({ id: it.id, quantity: it.quantity || 1, kind: it.kind || 'product' })),
+      }
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error('Failed to place order')
+      clearCart()
+      navigate('/thank-you', { replace: true })
     } finally {
       setPlacing(false)
     }
