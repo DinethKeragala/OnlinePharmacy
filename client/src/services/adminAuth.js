@@ -13,12 +13,14 @@ export function setAdminToken(token, persist = false) {
       sessionStorage.setItem(ADMIN_TOKEN_KEY, token)
       localStorage.removeItem(ADMIN_TOKEN_KEY)
     }
-  } catch {}
+  } catch {
+    // Ignore storage errors (e.g., private mode)
+  }
 }
 
 export function clearAdminToken() {
-  try { sessionStorage.removeItem(ADMIN_TOKEN_KEY) } catch {}
-  try { localStorage.removeItem(ADMIN_TOKEN_KEY) } catch {}
+  try { sessionStorage.removeItem(ADMIN_TOKEN_KEY) } catch { /* ignore */ }
+  try { localStorage.removeItem(ADMIN_TOKEN_KEY) } catch { /* ignore */ }
 }
 
 export function isAdminAuthenticated() {

@@ -21,7 +21,7 @@ import { isAdminAuthenticated } from './services/adminAuth'
 function Shell() {
   const location = useLocation()
   const path = location.pathname
-  const hideNavbar = path.startsWith('/admin')
+  const hideNavbar = path === '/admin/login' || path === '/login' || path === '/register'
   const hideFooter = path.startsWith('/admin') || path === '/login' || path === '/register'
   return (
     <div className="min-h-screen bg-gray-50">

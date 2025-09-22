@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const { safeRegexContains, toFiniteNumber } = require('../utils/safeQuery');
 
 // Build Mongo filter from query params
 function buildFilter(query) {
@@ -11,14 +12,14 @@ function buildFilter(query) {
   if (prescription === 'required') filter.prescription = true;
   if (prescription === 'none') filter.prescription = false;
   if (q) {
-    filter.$or = [
-      { name: { $regex: q, $options: 'i' } },
-      { genericName: { $regex: q, $options: 'i' } },
-    ];
+    const rx = safeRegexContains(q);
+    filter.$or = [ { name: rx }, { genericName: rx } ];
   }
   const price = {};
-  if (priceMin) price.$gte = Number(priceMin);
-  if (priceMax) price.$lte = Number(priceMax);
+  const pmin = toFiniteNumber(priceMin);
+  const pmax = toFiniteNumber(priceMax);
+  if (pmin !== null) price.$gte = pmin;
+  if (pmax !== null) price.$lte = pmax;
   if (Object.keys(price).length) filter.price = price;
 
   return filter;

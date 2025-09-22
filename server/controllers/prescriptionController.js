@@ -1,4 +1,5 @@
 const Prescription = require('../models/Prescription');
+const { isValidObjectId } = require('../utils/safeQuery');
 
 const ALLOWED_STATUS = ['active', 'pending', 'expired'];
 
@@ -63,7 +64,8 @@ exports.create = async (req, res) => {
 // PATCH /api/prescriptions/:id/request-refill
 exports.requestRefill = async (req, res) => {
   try {
-    const { id } = req.params;
+  const { id } = req.params;
+  if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
     const doc = await Prescription.findOne({ _id: id, user: req.userId });
     if (!doc) return res.status(404).json({ message: 'Not found' });
     if (doc.status !== 'active') return res.status(400).json({ message: 'Only active prescriptions can be refilled' });

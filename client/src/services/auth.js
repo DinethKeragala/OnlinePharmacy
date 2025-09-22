@@ -6,8 +6,8 @@ export function getToken() {
 }
 
 export function clearToken() {
-  try { localStorage.removeItem(TOKEN_KEY) } catch {}
-  try { sessionStorage.removeItem(TOKEN_KEY) } catch {}
+  try { localStorage.removeItem(TOKEN_KEY) } catch { /* ignore */ }
+  try { sessionStorage.removeItem(TOKEN_KEY) } catch { /* ignore */ }
 }
 
 export function isAuthenticated() {

@@ -5,10 +5,10 @@ export default function Footer() {
 	const year = new Date().getFullYear()
 
 	const socials = [
-		{ name: 'Facebook', href: '#', Icon: FaFacebookF },
-		{ name: 'Instagram', href: '#', Icon: FaInstagram },
-		{ name: 'Twitter (X)', href: '#', Icon: FaTwitter },
-		{ name: 'LinkedIn', href: '#', Icon: FaLinkedinIn },
+		{ name: 'Facebook', href: '#', icon: <FaFacebookF size={16} /> },
+		{ name: 'Instagram', href: '#', icon: <FaInstagram size={16} /> },
+		{ name: 'Twitter (X)', href: '#', icon: <FaTwitter size={16} /> },
+		{ name: 'LinkedIn', href: '#', icon: <FaLinkedinIn size={16} /> },
 	]
 
 			return (
@@ -29,7 +29,7 @@ export default function Footer() {
 						<div className="mt-6">
 								<p className="text-sm font-semibold text-white tracking-wide uppercase">Follow us</p>
 								<div className="mt-3 flex items-center gap-3">
-								{socials.map(({ name, href, Icon }) => (
+								{socials.map(({ name, href, icon }) => (
 									<a
 										key={name}
 										href={href}
@@ -38,7 +38,7 @@ export default function Footer() {
 										aria-label={name}
 																className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-blue-400/50 text-blue-100 hover:text-white hover:border-white transition-colors"
 									>
-										<Icon size={16} />
+										{icon}
 									</a>
 								))}
 							</div>

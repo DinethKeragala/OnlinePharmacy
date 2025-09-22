@@ -38,7 +38,7 @@ export default function AdminMedicines() {
         if (!mounted) return
         setItems(listJson.data || [])
         setCategories(catsJson || [])
-      } catch (e) {
+      } catch {
         if (mounted) setError('Failed to load medicines')
       } finally {
         if (mounted) setLoading(false)

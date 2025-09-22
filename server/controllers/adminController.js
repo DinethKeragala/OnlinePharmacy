@@ -1,11 +1,13 @@
 const User = require('../models/User');
 const { verifyPassword, signToken, verifyToken } = require('../utils/auth');
+const { normalizeEmail } = require('../utils/safeQuery');
 
 exports.login = async (req, res) => {
   try {
-    const { username, password } = req.body || {};
-    if (!username || !password) return res.status(400).json({ message: 'Missing credentials' });
-    const user = await User.findOne({ email: username.toLowerCase(), role: 'admin' });
+  const { username, password } = req.body || {};
+  const em = normalizeEmail(username);
+  if (!em || !password) return res.status(400).json({ message: 'Missing credentials' });
+  const user = await User.findOne().where('email').equals(em).where('role').equals('admin');
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
     const ok = verifyPassword(password, user.passwordSalt, user.passwordHash);
     if (!ok) return res.status(401).json({ message: 'Invalid credentials' });

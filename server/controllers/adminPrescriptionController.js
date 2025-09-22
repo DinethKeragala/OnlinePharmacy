@@ -1,5 +1,6 @@
 const Prescription = require('../models/Prescription');
 const User = require('../models/User');
+const { safeRegexContains, isValidObjectId } = require('../utils/safeQuery');
 
 // Map UI status to model status
 function mapUiToModelStatus(s) {
@@ -22,11 +23,8 @@ exports.list = async (req, res) => {
     if (status) filter.status = status;
     const q = req.query.q && String(req.query.q).trim();
     if (q) {
-      filter.$or = [
-        { name: { $regex: q, $options: 'i' } },
-        { doctor: { $regex: q, $options: 'i' } },
-        { rxNumber: { $regex: q, $options: 'i' } },
-      ]
+      const rx = safeRegexContains(q);
+      filter.$or = [ { name: rx }, { doctor: rx }, { rxNumber: rx } ];
     }
 
     const [total, items] = await Promise.all([
@@ -47,7 +45,8 @@ exports.list = async (req, res) => {
 
 exports.getOne = async (req, res) => {
   try {
-    const { id } = req.params;
+  const { id } = req.params;
+  if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
     const doc = await Prescription.findById(id).populate('user', '_id name email');
     if (!doc) return res.status(404).json({ message: 'Not found' });
     res.json(doc);
@@ -59,7 +58,8 @@ exports.getOne = async (req, res) => {
 
 exports.updateStatus = async (req, res) => {
   try {
-    const { id } = req.params;
+  const { id } = req.params;
+  if (!isValidObjectId(id)) return res.status(400).json({ message: 'Invalid id' });
     const desired = mapUiToModelStatus(req.body.status);
     if (!desired) return res.status(400).json({ message: 'Invalid status' });
 

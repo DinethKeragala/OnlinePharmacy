@@ -128,10 +128,23 @@ export default function Register() {
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" required />
-            I agree to the <a className="text-blue-600 hover:underline" href="#">Terms of Service</a> and <a className="text-blue-600 hover:underline" href="#">Privacy Policy</a>
-          </label>
+          <div className="flex items-start gap-3 text-sm text-gray-700">
+            <input
+              id="agree"
+              type="checkbox"
+              className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              required
+            />
+            <label htmlFor="agree" className="leading-6">
+              I agree to the{' '}
+              <a href="/terms" className="text-blue-600 hover:underline whitespace-nowrap" target="_blank" rel="noreferrer">
+                Terms of Service
+              </a>{' '}and{' '}
+              <a href="/privacy" className="text-blue-600 hover:underline whitespace-nowrap" target="_blank" rel="noreferrer">
+                Privacy Policy
+              </a>.
+            </label>
+          </div>
 
           <button
             disabled={loading}

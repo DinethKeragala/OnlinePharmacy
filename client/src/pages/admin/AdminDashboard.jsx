@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { clearAdminToken, fetchAdminMe, isAdminAuthenticated } from '../../services/adminAuth'
+import { clearAdminToken, fetchAdminMe, getAdminToken, isAdminAuthenticated } from '../../services/adminAuth'
 
 function StatCard({ title, value, icon, color = 'blue' }) {
   const colorMap = {
@@ -25,13 +25,64 @@ function StatCard({ title, value, icon, color = 'blue' }) {
 export default function AdminDashboard() {
   const [me, setMe] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({ meds: 0, users: 0, pending: 0 })
+  const [recent, setRecent] = useState([])
+  const [lowStock, setLowStock] = useState([])
 
   useEffect(() => {
     let mounted = true
     async function load() {
       setLoading(true)
       const res = await fetchAdminMe()
-      if (mounted) { setMe(res); setLoading(false) }
+      if (mounted) { setMe(res) }
+
+      // In parallel, fetch dashboard data
+      try {
+        const token = getAdminToken()
+
+        const [usersRes, pendingRes, recentsRes, medsRes] = await Promise.all([
+          fetch('/api/admin/users?limit=1', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/admin/prescriptions?status=pending&limit=1', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/admin/prescriptions?limit=5', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/products?type=medicine&limit=50'),
+        ])
+
+        const usersJson = usersRes.ok ? await usersRes.json() : { total: 0 }
+        const pendingJson = pendingRes.ok ? await pendingRes.json() : { total: 0 }
+        const recentsJson = recentsRes.ok ? await recentsRes.json() : { data: [] }
+        const medsJson = medsRes.ok ? await medsRes.json() : { total: 0, data: [] }
+
+        if (mounted) {
+          setStats({
+            meds: Number(medsJson.total || 0),
+            users: Number(usersJson.total || 0),
+            pending: Number(pendingJson.total || 0),
+          })
+
+          // Map recent prescriptions for table
+          const mappedRecent = (recentsJson.data || []).map((r) => ({
+            id: r.rxNumber || r._id,
+            patient: r.user?.name || '—',
+            med: r.name,
+            status: r.status === 'active' ? 'Approved' : r.status === 'expired' ? 'Rejected' : 'Pending',
+          }))
+          setRecent(mappedRecent)
+
+          // Low stock meds (<= 20 units), top 5 asc by stock
+          const low = (medsJson.data || [])
+            .filter((p) => typeof p.stock === 'number' && p.stock <= 20)
+            .sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0))
+            .slice(0, 5)
+            .map((p) => ({ name: p.name, remaining: p.stock ?? 0, min: 20 }))
+          setLowStock(low)
+        }
+      } catch (err) {
+        // On failure, keep defaults; optionally we could show a banner.
+        // Log once for debugging purposes
+        console.error('Failed to load admin dashboard data', err)
+      } finally {
+        if (mounted) setLoading(false)
+      }
     }
     load()
     return () => { mounted = false }
@@ -41,17 +92,7 @@ export default function AdminDashboard() {
   if (loading) return <div className="p-6 text-gray-600">Loading admin...</div>
   if (!me) return <Navigate to="/admin/login" replace />
 
-  const recent = [
-    { id: 'RX-4567', patient: 'John Smith', med: 'Metformin 500mg', status: 'Pending' },
-    { id: 'RX-4566', patient: 'Sarah Johnson', med: 'Lisinopril 10mg', status: 'Approved' },
-    { id: 'RX-4565', patient: 'Michael Chen', med: 'Amoxicillin 500mg', status: 'Pending' },
-    { id: 'RX-4564', patient: 'Emily Davis', med: 'Atorvastatin 20mg', status: 'Approved' },
-  ]
-
-  const lowStock = [
-    { name: 'Amoxicillin 500mg', remaining: 15, min: 20 },
-    { name: 'Lisinopril 10mg', remaining: 8, min: 15 },
-  ]
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -95,9 +136,9 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="Total Medicines" value={247} icon={<span>💊</span>} color="blue" />
-            <StatCard title="Pending Prescriptions" value={18} icon={<span>📋</span>} color="yellow" />
-            <StatCard title="Registered Users" value={1254} icon={<span>👥</span>} color="green" />
+            <StatCard title="Total Medicines" value={stats.meds} icon={<span>💊</span>} color="blue" />
+            <StatCard title="Pending Prescriptions" value={stats.pending} icon={<span>📋</span>} color="yellow" />
+            <StatCard title="Registered Users" value={stats.users} icon={<span>👥</span>} color="green" />
             <StatCard title="Monthly Sales" value="$24,500" icon={<span>📈</span>} color="purple" />
           </div>
 

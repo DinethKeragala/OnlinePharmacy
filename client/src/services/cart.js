@@ -13,7 +13,9 @@ function write(items) {
   try {
     localStorage.setItem(CART_KEY, JSON.stringify(items))
     notify()
-  } catch {}
+  } catch {
+    // Swallow storage errors
+  }
 }
 
 export function getItems() {
@@ -58,7 +60,7 @@ const listeners = new Set()
 function notify() {
   const snapshot = read()
   listeners.forEach((fn) => {
-    try { fn(snapshot) } catch {}
+    try { fn(snapshot) } catch { /* ignore listener errors */ }
   })
 }
 

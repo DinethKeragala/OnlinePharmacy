@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Prescription = require('../models/Prescription');
+const { safeRegexContains } = require('../utils/safeQuery');
 
 exports.list = async (req, res) => {
   try {
@@ -10,8 +11,8 @@ exports.list = async (req, res) => {
 
     const userFilter = {};
     if (q) {
-      const regex = new RegExp(q, 'i');
-      userFilter.$or = [ { name: regex }, { email: regex } ];
+      const rx = safeRegexContains(q);
+      userFilter.$or = [ { name: rx }, { email: rx } ];
     }
 
     const [total, users] = await Promise.all([

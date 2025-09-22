@@ -8,11 +8,11 @@ function formatDate(d) {
   try { return new Date(d).toISOString().slice(0,10) } catch { return '' }
 }
 
-function StatCard({ icon: Icon, title, value, subtitle, action }) {
+function StatCard({ icon, title, value, subtitle, action }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-start justify-between">
       <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><Icon /></div>
+        <div className="h-10 w-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">{icon}</div>
         <div>
           <div className="font-semibold text-gray-900">{title}</div>
           <div className="text-3xl font-bold text-gray-900 mt-1">{value}</div>
@@ -168,8 +168,8 @@ const Prescriptions = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stat cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard icon={FaClipboardList} title="Active Prescriptions" value={active.length} subtitle="Currently active medications" />
-          <StatCard icon={FaClock} title="Pending Refills" value={pending.length} subtitle="Awaiting approval" />
+          <StatCard icon={<FaClipboardList />} title="Active Prescriptions" value={active.length} subtitle="Currently active medications" />
+          <StatCard icon={<FaClock />} title="Pending Refills" value={pending.length} subtitle="Awaiting approval" />
           <StatCard
             icon={FaUpload}
             title="Upload New"
