@@ -9,6 +9,66 @@ const {
   parseSort,
 } = require('../utils/queryBuilders');
 
+// --- Helpers for creation validation/sanitization ---
+function badRequest(message) {
+  const e = new Error(message);
+  e.status = 400;
+  return e;
+}
+
+function parseImageUrl(val) {
+  if (typeof val !== 'string') return undefined;
+  const u = val.trim();
+  if (u && u.length <= 1024 && /^(https?:)\/\//i.test(u)) return u;
+  return undefined;
+}
+
+function sanitizeTags(arr) {
+  if (!Array.isArray(arr)) return undefined;
+  const tags = arr
+    .filter((t) => typeof t === 'string')
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, 20)
+    .map((t) => t.slice(0, 50));
+  return tags.length ? tags : undefined;
+}
+
+function sanitizeType(val) {
+  return typeof val === 'string' && (val === 'medicine' || val === 'health') ? val : 'medicine';
+}
+
+function sanitizeCreateProduct(body) {
+  const src = body || {};
+  const name = typeof src.name === 'string' ? src.name.trim().slice(0, 200) : '';
+  const description = typeof src.description === 'string' ? src.description.trim().slice(0, 5000) : '';
+  const genericName = typeof src.genericName === 'string' ? src.genericName.trim().slice(0, 200) : undefined;
+
+  const category = sanitizeCategory(typeof src.category === 'string' ? src.category.trim() : undefined) || '';
+  const type = sanitizeType(src.type);
+
+  const priceNum = toFiniteNumber(src.price);
+  const price = priceNum !== null ? Math.max(0, priceNum) : null;
+
+  const inStock = typeof src.inStock === 'boolean' ? src.inStock : Boolean(src.inStock);
+  const stockNum = toFiniteNumber(src.stock);
+  const stock = stockNum !== null ? Math.max(0, Math.floor(stockNum)) : 0;
+
+  const prescription = typeof src.prescription === 'boolean' ? src.prescription : Boolean(src.prescription);
+
+  const ratingNum = toFiniteNumber(src.rating);
+  const rating = ratingNum !== null ? Math.max(0, Math.min(5, ratingNum)) : undefined;
+
+  const imageUrl = parseImageUrl(src.imageUrl);
+  const tags = sanitizeTags(src.tags);
+
+  if (!name || !description || price === null || !category) {
+    throw badRequest('Missing or invalid required fields');
+  }
+
+  return { name, description, genericName, price, category, imageUrl, inStock, stock, prescription, type, tags, rating };
+}
+
 // Build Mongo filter from query params
 function buildFilter(query) {
   const filter = {};
@@ -102,7 +162,13 @@ exports.getCategories = async (req, res) => {
       q = q.where('type').equals(req.query.type);
     }
     const categories = await q.distinct('category');
-    res.json(categories.sort());
+    // Custom compare: sort by length first, then case-insensitive for ties
+    const compareCategories = (a = '', b = '') => {
+      const la = a.length, lb = b.length;
+      if (la !== lb) return la - lb; // shorter first
+      return a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
+    };
+    res.json(categories.sort(compareCategories));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -112,66 +178,12 @@ exports.getCategories = async (req, res) => {
 // Admin: create a new product (sanitize input and whitelist fields)
 exports.createProduct = async (req, res) => {
   try {
-    const body = req.body || {};
-
-    const name = typeof body.name === 'string' ? body.name.trim().slice(0, 200) : '';
-    const description = typeof body.description === 'string' ? body.description.trim().slice(0, 5000) : '';
-    const genericName = typeof body.genericName === 'string' ? body.genericName.trim().slice(0, 200) : undefined;
-    const categoryRaw = typeof body.category === 'string' ? body.category.trim() : '';
-    const category = /^[\w\s-]{1,64}$/.test(categoryRaw) ? categoryRaw : '';
-    const type = typeof body.type === 'string' && (body.type === 'medicine' || body.type === 'health') ? body.type : 'medicine';
-
-    const priceNum = toFiniteNumber(body.price);
-    const price = priceNum !== null ? Math.max(0, priceNum) : null;
-
-    const inStock = typeof body.inStock === 'boolean' ? body.inStock : Boolean(body.inStock);
-    const stockNum = toFiniteNumber(body.stock);
-    const stock = stockNum !== null ? Math.max(0, Math.floor(stockNum)) : 0;
-
-    const prescription = typeof body.prescription === 'boolean' ? body.prescription : Boolean(body.prescription);
-
-    const ratingNum = toFiniteNumber(body.rating);
-    const rating = ratingNum !== null ? Math.max(0, Math.min(5, ratingNum)) : undefined;
-
-    let imageUrl;
-    if (typeof body.imageUrl === 'string') {
-      const u = body.imageUrl.trim();
-      if (u.length <= 1024 && /^(https?:)\/\//i.test(u)) imageUrl = u;
-    }
-
-    let tags;
-    if (Array.isArray(body.tags)) {
-      tags = body.tags
-        .filter((t) => typeof t === 'string')
-        .map((t) => t.trim())
-        .filter((t) => t)
-        .slice(0, 20)
-        .map((t) => t.slice(0, 50));
-      if (!tags.length) tags = undefined;
-    }
-
-    if (!name || !description || price === null || !category) {
-      return res.status(400).json({ message: 'Missing or invalid required fields' });
-    }
-
-    const doc = new Product({
-      name,
-      description,
-      genericName,
-      price,
-      category,
-      imageUrl,
-      inStock,
-      stock,
-      prescription,
-      type,
-      tags,
-      rating,
-    });
-    const saved = await doc.save();
+    const payload = sanitizeCreateProduct(req.body);
+    const saved = await new Product(payload).save();
     return res.status(201).json(saved);
   } catch (err) {
     console.error(err);
+    if (err && err.status === 400) return res.status(400).json({ message: err.message });
     return res.status(500).json({ message: 'Server error' });
   }
 };

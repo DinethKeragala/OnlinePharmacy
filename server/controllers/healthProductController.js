@@ -82,7 +82,13 @@ exports.getHealthProductById = async (req, res) => {
 exports.getHealthCategories = async (req, res) => {
   try {
     const categories = await HealthProduct.distinct('category');
-    res.json(categories.sort());
+    // Custom compare: sort by length first, then case-insensitive lexicographic for ties
+    const compareCategories = (a = '', b = '') => {
+      const la = a.length, lb = b.length;
+      if (la !== lb) return la - lb; // shorter names first
+      return a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
+    };
+    res.json(categories.sort(compareCategories));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

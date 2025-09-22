@@ -136,24 +136,47 @@ const Prescriptions = () => {
 
   useEffect(() => {
     let mounted = true
-    setLoading(true)
-    Promise.all([
-      fetchPrescriptions('active'),
-      fetchPrescriptions('pending'),
-      fetchPrescriptions('expired'),
-    ]).then(([a,p,e])=>{
-      if (!mounted) return
-      setActive(a)
-      setPending(p)
-      setExpired(e)
-    }).catch(err=>{
-      if (!mounted) return
-      setError(err.message || 'Failed to load prescriptions')
-    }).finally(()=>{
-      if (mounted) setLoading(false)
-    })
+    const load = async () => {
+      setLoading(true)
+      try {
+        const [a, p, e] = await Promise.all([
+          fetchPrescriptions('active'),
+          fetchPrescriptions('pending'),
+          fetchPrescriptions('expired'),
+        ])
+        if (!mounted) return
+        setActive(a)
+        setPending(p)
+        setExpired(e)
+      } catch (err) {
+        if (!mounted) return
+        setError(err.message || 'Failed to load prescriptions')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+    load()
     return () => { mounted = false }
   }, [])
+
+  const handleRequestRefill = async (id) => {
+    try {
+      const updated = await requestRefill(id)
+      setActive(curr => curr.map(it => (it._id === updated._id ? updated : it)))
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleCreatedPrescription = (created) => {
+    if (created.status === 'active') {
+      setActive(a => [created, ...a])
+    } else if (created.status === 'pending') {
+      setPending(p => [created, ...p])
+    } else {
+      setExpired(e => [created, ...e])
+    }
+  }
 
   const { list } = useMemo(() => {
     if (tab === 'active') return { list: active }
@@ -209,9 +232,7 @@ const Prescriptions = () => {
                     <div className="text-xs text-gray-600">Refills Left</div>
                     <div className="text-xl font-bold">{rx.refillsLeft ?? 0}</div>
                   </div>
-                  <button onClick={() => requestRefill(rx._id).then(updated=>{
-                    setActive(curr => curr.map(it => it._id === updated._id ? updated : it))
-                  }).catch(err=>setError(err.message))} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white"><FaSyncAlt /> Request Refill</button>
+                  <button onClick={() => handleRequestRefill(rx._id)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white"><FaSyncAlt /> Request Refill</button>
                   <button className="text-blue-600 font-medium">View Details →</button>
                 </div>
               </div>
@@ -247,11 +268,7 @@ const Prescriptions = () => {
         </div>
       </div>
 
-      <UploadModal open={openUpload} onClose={() => setOpenUpload(false)} onCreated={(created)=>{
-        if (created.status === 'active') setActive(a => [created, ...a])
-        else if (created.status === 'pending') setPending(p => [created, ...p])
-        else setExpired(e => [created, ...e])
-      }} />
+      <UploadModal open={openUpload} onClose={() => setOpenUpload(false)} onCreated={handleCreatedPrescription} />
     </div>
   )
 }
