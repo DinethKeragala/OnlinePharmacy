@@ -40,7 +40,11 @@ const Navbar = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    console.log('Searching for:', searchQuery);
+    const q = (searchQuery || '').trim();
+    // Navigate to Medicines with the search query; if empty, go to base Medicines
+    navigate(q ? `/medicines?q=${encodeURIComponent(q)}` : '/medicines');
+    // Close mobile menu after searching
+    if (isMenuOpen) setIsMenuOpen(false);
   };
 
   return (
@@ -164,9 +168,11 @@ const Navbar = () => {
             )}
             <Link to="/cart" className="text-gray-600 hover:text-blue-600 relative">
               <FaShoppingCart size={20} />
-              <span className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                3
-              </span>
+              {!!cartCount && (
+                <span className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full min-w-5 h-5 px-1 flex items-center justify-center text-xs">
+                  {cartCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>

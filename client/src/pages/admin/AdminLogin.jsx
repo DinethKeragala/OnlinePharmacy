@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { FiUser, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -15,7 +15,7 @@ export default function AdminLogin() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Login failed')
@@ -54,14 +54,15 @@ export default function AdminLogin() {
 
           <form onSubmit={onSubmit} className="space-y-5">
             <label className="block">
-              <span className="block text-sm font-medium text-gray-800 mb-1">Username</span>
+              <span className="block text-sm font-medium text-gray-800 mb-1">Email</span>
               <div className="relative">
                 <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
+                  type="email"
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pl-10 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Enter your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>

@@ -3,144 +3,17 @@ import PropTypes from 'prop-types'
 import PageHeader from '../components/common/PageHeader'
 import { FaClipboardList, FaClock, FaUpload, FaSyncAlt } from 'react-icons/fa'
 import { fetchPrescriptions, requestRefill, createPrescription } from '../services/prescriptions'
+import StatCard from '../components/prescriptions/StatCard'
+import StatusPill from '../components/prescriptions/StatusPill'
+import UploadModal from '../components/prescriptions/UploadModal'
+import TabButton from '../components/prescriptions/TabButton'
 
 function formatDate(d) {
   if (!d) return ''
   try { return new Date(d).toISOString().slice(0,10) } catch { return '' }
 }
 
-function StatCard({ icon, title, value, subtitle, action }) {
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-start justify-between">
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">{icon}</div>
-        <div>
-          <div className="font-semibold text-gray-900">{title}</div>
-          <div className="text-3xl font-bold text-gray-900 mt-1">{value}</div>
-          <div className="text-sm text-gray-500">{subtitle}</div>
-        </div>
-      </div>
-      {action}
-    </div>
-  )
-}
-StatCard.propTypes = {
-  icon: PropTypes.node,
-  title: PropTypes.string.isRequired,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  subtitle: PropTypes.string,
-  action: PropTypes.node,
-}
-
-function StatusPill({ text, color = 'green' }) {
-  const palette = {
-    green: 'bg-green-50 text-green-700',
-    yellow: 'bg-yellow-50 text-yellow-700',
-    red: 'bg-red-50 text-red-700',
-    blue: 'bg-blue-50 text-blue-700',
-    gray: 'bg-gray-100 text-gray-700',
-  }[color]
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${palette}`}>{text}</span>
-}
-StatusPill.propTypes = {
-  text: PropTypes.string.isRequired,
-  color: PropTypes.oneOf(['green', 'yellow', 'red', 'blue', 'gray']),
-}
-
-function TabButton({ active, children, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-2 text-sm font-medium border-b-2 ${active ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-600 hover:text-gray-800'}`}
-    >
-      {children}
-    </button>
-  )
-}
-TabButton.propTypes = {
-  active: PropTypes.bool,
-  children: PropTypes.node,
-  onClick: PropTypes.func,
-}
-
-function UploadModal({ open, onClose, onCreated }) {
-  const [form, setForm] = useState({ name: '', doctor: '', rxNumber: '', prescribedAt: '', refillsLeft: 0, note: '' })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  if (!open) return null
-
-  const submit = async () => {
-    setLoading(true); setError('')
-    try {
-      const payload = {
-        ...form,
-        refillsLeft: Number(form.refillsLeft || 0),
-        status: 'pending',
-      }
-      const created = await createPrescription(payload)
-      onCreated?.(created)
-      onClose()
-      setForm({ name: '', doctor: '', rxNumber: '', prescribedAt: '', refillsLeft: 0, note: '' })
-    } catch (e) {
-      setError(e.message || 'Failed to upload prescription')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl w-full max-w-3xl shadow-xl overflow-hidden">
-          <div className="px-6 py-4 border-b">
-            <div className="font-semibold text-gray-900">Upload Your Prescription</div>
-          </div>
-          <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">Easy Prescription Refills</h3>
-              <p className="mt-3 text-gray-600">Upload your prescription and get your medications delivered to your doorstep. Our licensed pharmacists ensure accuracy and safety.</p>
-              <ul className="mt-4 space-y-3 text-gray-700">
-                <li className="flex items-start gap-2"><span className="text-green-500">✓</span> Quick Processing — processed within minutes of upload</li>
-                <li className="flex items-start gap-2"><span className="text-green-500">✓</span> Secure & Confidential — your data is private</li>
-              </ul>
-            </div>
-            <div>
-              <div className="rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/30 p-6 text-center">
-                <div className="text-5xl text-blue-400">☁️</div>
-                <p className="mt-2 text-gray-700">Drag and drop your prescription here or</p>
-                <button className="mt-2 text-blue-600 font-medium hover:underline">browse files</button>
-                <p className="mt-2 text-xs text-gray-500">Supported formats: JPG, PNG, PDF (Max size: 10MB)</p>
-              </div>
-              {error && <div className="mt-4 rounded bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
-              <div className="mt-4 grid grid-cols-1 gap-3">
-                <input className="w-full rounded-lg border-gray-300" placeholder="Medicine Name" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
-                <input className="w-full rounded-lg border-gray-300" placeholder="Prescribing Doctor" value={form.doctor} onChange={e=>setForm(f=>({...f,doctor:e.target.value}))} />
-                <input className="w-full rounded-lg border-gray-300" placeholder="RX Number" value={form.rxNumber} onChange={e=>setForm(f=>({...f,rxNumber:e.target.value}))} />
-                <div className="grid grid-cols-2 gap-3">
-                  <input type="date" className="w-full rounded-lg border-gray-300" placeholder="Prescribed At" value={form.prescribedAt} onChange={e=>setForm(f=>({...f,prescribedAt:e.target.value}))} />
-                  <input type="number" min="0" className="w-full rounded-lg border-gray-300" placeholder="Refills Left" value={form.refillsLeft} onChange={e=>setForm(f=>({...f,refillsLeft:e.target.value}))} />
-                </div>
-                <input className="w-full rounded-lg border-gray-300" placeholder="Note (optional)" value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} />
-                <p className="text-xs text-gray-500">Tip: Newly uploaded prescriptions start as Pending while our pharmacists verify details.</p>
-              </div>
-            </div>
-          </div>
-          <div className="px-6 py-4 border-t flex justify-end gap-3">
-            <button onClick={onClose} className="px-4 py-2 rounded-lg border text-gray-700">Cancel</button>
-            <button onClick={submit} disabled={loading} className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50">{loading ? 'Uploading…' : 'Upload Prescription'}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-UploadModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onCreated: PropTypes.func,
-}
+// TabButton moved to components/prescriptions/TabButton
 
 const Prescriptions = () => {
   const breadcrumbs = [
@@ -290,7 +163,12 @@ const Prescriptions = () => {
         </div>
       </div>
 
-      <UploadModal open={openUpload} onClose={() => setOpenUpload(false)} onCreated={handleCreatedPrescription} />
+      <UploadModal
+        open={openUpload}
+        onClose={() => setOpenUpload(false)}
+        onCreated={handleCreatedPrescription}
+        createPrescription={createPrescription}
+      />
     </div>
   )
 }

@@ -18,10 +18,30 @@ export async function fetchPrescriptions(status) {
 }
 
 export async function createPrescription(payload) {
+  // Support optional file upload: if payload.image is a File/Blob, use FormData
+  const hasFile = payload && (payload.image instanceof File || payload.image instanceof Blob)
+  let body
+  let headers = { ...authHeaders() }
+  if (hasFile) {
+    const fd = new FormData()
+    Object.entries(payload).forEach(([k, v]) => {
+      if (v === undefined || v === null) return
+      if (k === 'image') {
+        fd.append('image', v)
+      } else {
+        fd.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v))
+      }
+    })
+    body = fd
+    // Let the browser set Content-Type with boundary
+  } else {
+    headers['Content-Type'] = 'application/json'
+    body = JSON.stringify(payload)
+  }
   const res = await fetch(base, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify(payload),
+    headers,
+    body,
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.message || 'Failed to create prescription')

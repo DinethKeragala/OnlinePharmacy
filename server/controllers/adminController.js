@@ -4,8 +4,8 @@ const { normalizeEmail, isValidObjectId } = require('../utils/safeQuery');
 
 exports.login = async (req, res) => {
   try {
-  const { username, password } = req.body || {};
-  const em = normalizeEmail(username);
+  const { email, username, password } = req.body || {};
+  const em = normalizeEmail(email || username);
   if (!em || !password) return res.status(400).json({ message: 'Missing credentials' });
   const user = await User.findOne().where('email').equals(em).where('role').equals('admin');
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });

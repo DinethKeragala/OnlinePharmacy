@@ -11,6 +11,7 @@ const prescriptionSchema = new mongoose.Schema({
   refillsLeft: { type: Number, default: 0 },
   status: { type: String, enum: ['active', 'pending', 'expired'], required: true, index: true },
   note: { type: String },
+  imageUrl: { type: String },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Prescription', prescriptionSchema);

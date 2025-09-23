@@ -87,7 +87,12 @@ exports.create = async (req, res) => {
     if (!isValidObjectId(req.userId)) return res.status(401).json({ message: 'Invalid user' });
 
     const payload = sanitizeCreateInput(req.body);
-    const doc = await Prescription.create({ user: req.userId, ...payload });
+    // If an image was uploaded via multer, expose a URL path for the client
+    let imageUrl;
+    if (req.file && req.file.filename) {
+      imageUrl = `/uploads/prescriptions/${req.file.filename}`;
+    }
+    const doc = await Prescription.create({ user: req.userId, ...payload, imageUrl });
     res.status(201).json(doc);
   } catch (err) {
     console.error('Create prescription error', err);

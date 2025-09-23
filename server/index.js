@@ -15,6 +15,12 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+// Static file serving for uploaded prescription images
+const path = require('path');
+const fs = require('fs');
+const uploadDir = path.join(process.cwd(), 'uploads', 'prescriptions');
+try { fs.mkdirSync(uploadDir, { recursive: true }); } catch {}
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Routes
 app.use('/api/products', require('./routes/productRoutes'));

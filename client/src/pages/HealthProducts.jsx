@@ -20,13 +20,15 @@ const HealthProducts = () => {
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
 
+  const location = useLocation()
+  const initialQ = useMemo(() => new URLSearchParams(location.search).get('q') || '', [location.search])
   const [filters, setFilters] = useState({
     category: 'all',
     price: 'all',
     priceMin: undefined,
     priceMax: undefined,
     inStock: 'all',
-    q: '',
+    q: initialQ,
   })
 
   const queryString = useMemo(() => {
@@ -71,7 +73,13 @@ const HealthProducts = () => {
   }, [queryString])
 
   const navigate = useNavigate()
-  const location = useLocation()
+  // Keep filters.q in sync with URL changes
+  useEffect(() => {
+    const urlQ = new URLSearchParams(location.search).get('q') || '';
+    setFilters((prev) => (prev.q === urlQ ? prev : { ...prev, q: urlQ }));
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search])
   const toast = useToast()
   const onAddToCart = (p) => {
     if (!isAuthenticated()) {
