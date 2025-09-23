@@ -27,9 +27,10 @@ export function ToastProvider({ children }) {
   return (
     <ToastCtx.Provider value={value}>
       {children}
-      <div className="fixed z-[1000] top-4 right-4 space-y-2">
+      {/* Offset below navbar (h-16 => 4rem). top-20 (5rem) ensures it doesn't cover cart button */}
+      <div className="fixed z-[1000] top-20 right-4 space-y-3">
         {toasts.map((t) => (
-          <div key={t.id} className={`min-w-[220px] max-w-sm shadow-md rounded-lg border text-sm px-4 py-3 bg-white ${t.type==='success'?'border-green-300':'border-gray-200'}`}>
+          <div key={t.id} className={`min-w-[260px] max-w-md shadow-md rounded-xl border text-base px-5 py-3.5 bg-white ${t.type==='success'?'border-green-300':'border-gray-200'}`}>
             <div className="flex items-start gap-2">
               <span>{t.type==='success'?'✅':'ℹ️'}</span>
               <div className="text-gray-800">{t.message}</div>

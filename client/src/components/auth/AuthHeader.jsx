@@ -4,7 +4,7 @@ export default function AuthHeader({ variant = 'user' }) {
   const title = variant === 'admin' ? 'MediCare+ Admin' : 'MediCare+'
   const rightLink = variant === 'admin'
     ? { href: '/', label: 'Return to Website' }
-    : { href: '/admin/login', label: 'Admin Login' }
+    : { href: '/', label: 'Return to Website' }
   return (
     <header className="bg-blue-700 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
